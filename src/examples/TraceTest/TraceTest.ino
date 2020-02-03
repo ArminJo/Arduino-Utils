@@ -1,7 +1,9 @@
 /*
- * AVRUtils.h
+ *  TraceTest.cpp
  *
- *  Copyright (C) 2016-2020  Armin Joachimsmeyer
+ *  Traces the call to digitalWrite(LED_BUILTIN,HIGH);
+ *
+ *  Copyright (C) 2015  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -20,32 +22,35 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
-#ifndef AVRUTILS_H_
-#define AVRUTILS_H_
 
-#include <stdint.h>
-#if defined(__AVR__)
-#include <avr/sleep.h>
-#include <avr/wdt.h>
+#include <Arduino.h>
 
-void initSleep(uint8_t tSleepMode);
-void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis = false);
-extern volatile uint16_t sNumberOfSleeps;
+#include "Trace.cpp.h"
+
+#define VERSION_EXAMPLE "1.0"
+#define INFO
+
+void setup() {
+    // initialize the digital pin as an output.
+    pinMode(LED_BUILTIN, OUTPUT);
+
+    Serial.begin(115200);
+#if defined(__AVR_ATmega32U4__)
+        while (!Serial)
+        ; //delay for Leonardo
 #endif
 
-#include <Print.h>
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
-#define HEAP_STACK_UNTOUCHED_VALUE 0x5A
-void initStackFreeMeasurement();
-uint16_t getStackFreeMinimumBytes();
-void printStackFreeMinimumBytes(Print * aSerial);
-uint8_t * getHeapStart();
-uint16_t getFreeHeap(void);
-void printFreeHeap(Print * aSerial);
-uint16_t getFreeRam(void);
-void printFreeRam(Print * aSerial);
-bool isAddressInRAM(void * aAddressToCheck);
-bool isAddressBelowHeap(void * aAddressToCheck);
-#endif // AVRUTILS_H_
+    enableINT0InterruptOnFallingEdge();
+    Serial.println(F("Each falling edge on PCI0 will print Program Counter"));
+    printTextSectionAddresses();
 
-#pragma once
+}
+
+void loop() {
+    startTracingSignal();
+    digitalWrite(LED_BUILTIN, HIGH);
+    stopTracingSignal();
+    digitalWrite(LED_BUILTIN, LOW);
+}

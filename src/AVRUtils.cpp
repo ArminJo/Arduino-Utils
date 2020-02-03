@@ -24,6 +24,7 @@
  *
  */
 
+#if defined(__AVR__)
 #include "AVRUtils.h"
 #include <avr/interrupt.h>
 #include <stdlib.h> // for __malloc_margin
@@ -190,7 +191,7 @@ void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis) {
 #define WDTCSR  WDTCR
 #endif
     WDTCSR |= _BV(WDIE) | _BV(WDIF); // Watchdog interrupt enable + reset interrupt flag -> needs ISR(WDT_vect)
-    sei();
+    sei(); // enable interrupts
     sleep_cpu()
     ;
     wdt_disable(); // Because next interrupt will lead to a reset, since wdt_enable() sets WDE / Watchdog System Reset Enable
@@ -247,3 +248,5 @@ void setclockDivisionFactor(uint8_t aDivisionBits) {
     CLKPR = _BV(CLKPCE);
     CLKPR = aDivisionBits;
 }
+
+#endif // defined(__AVR__)

@@ -32,7 +32,8 @@
 #define US_DISTANCE_TIMEOUT_MICROS_FOR_3_METER 17475 // Timeout of 17475 is 3 meter
 #define US_DISTANCE_DEFAULT_TIMEOUT_CENTIMETER 343   // Timeout of 20000L is 3.43 meter
 
-void initUSDistancePins(uint8_t aTriggerOutPin, uint8_t aEchoInPin);
+void initUSDistancePins(uint8_t aTriggerOutPin, uint8_t aEchoInPin = 0);
+void initUSDistancePin(uint8_t aTriggerOutEchoInPin);
 unsigned int getUSDistance(unsigned int aTimeoutMicros = US_DISTANCE_DEFAULT_TIMEOUT_MICROS);
 unsigned int getCentimeterFromUSMicroSeconds(unsigned int aDistanceMicros);
 unsigned int getUSDistanceAsCentiMeter(unsigned int aTimeoutMicros = US_DISTANCE_DEFAULT_TIMEOUT_MICROS);
@@ -48,6 +49,11 @@ bool isUSDistanceMeasureFinished();
 extern unsigned int sUSDistanceCentimeter;
 extern volatile unsigned long sUSPulseMicros;
 #endif
+
+#define HCSR04_MODE_UNITITIALIZED   0
+#define HCSR04_MODE_USE_1_PIN       1
+#define HCSR04_MODE_USE_2_PINS      2
+extern uint8_t sHCSR04Mode;
 
 #endif // HCSR04_H_
 

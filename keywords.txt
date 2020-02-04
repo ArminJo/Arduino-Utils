@@ -5,26 +5,48 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-Talkie	KEYWORD1
+BlinkLed	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-say	KEYWORD2
-ptrAddr	KEYWORD3
-sayQ	KEYWORD2
-isTalking	KEYWORD2
-wait	KEYWORD2
-stop	KEYWORD2
-terminate	KEYWORD2
-doNotUseUseInvertedOutput	KEYWORD2
-doNotUseNonInvertedOutput	KEYWORD2
-getNumberOfWords	KEYWORD2
-sayQDigit	KEYWORD2
-sayQNumber	KEYWORD2
-sayQFloat	KEYWORD2
-sayQVoltageMilliVolts	KEYWORD2
-sayQPause	KEYWORD2
+
+# From HCSR04.cpp
+initUSDistancePins	KEYWORD2
+initUSDistancePin	KEYWORD3
+getUSDistance	KEYWORD2
+getCentimeterFromUSMicroSeconds	KEYWORD2
+getUSDistanceAsCentiMeter	KEYWORD2
+getUSDistanceAsCentiMeterWithCentimeterTimeout	KEYWORD2
+testUSSensor	KEYWORD2
+
+US_DISTANCE_DEFAULT_TIMEOUT_MICROS	LITERAL1
+US_DISTANCE_TIMEOUT_MICROS_FOR_1_METER	LITERAL1
+US_DISTANCE_TIMEOUT_MICROS_FOR_2_METER	LITERAL1
+US_DISTANCE_TIMEOUT_MICROS_FOR_3_METER	LITERAL1
+US_DISTANCE_DEFAULT_TIMEOUT_CENTIMETER	LITERAL1
+
+# From ADCUtils.cpp
+readADCChannel	KEYWORD2
+readADCChannelWithReference	KEYWORD2
+readADCChannelWithOversample	KEYWORD2
+readADCChannelWithReferenceOversample	KEYWORD2
+readADCChannelWithReferenceMultiSamples	KEYWORD2
+readADCChannelWithReferenceMax	KEYWORD2
+readADCChannelWithReferenceMaxMicros	KEYWORD2
+
+getVCCVoltageSimple	KEYWORD2
+getVCCVoltageMillivoltSimple	KEYWORD2
+getTemperatureSimple	KEYWORD2
+getVCCVoltage	KEYWORD2
+getVCCVoltageMillivolt	KEYWORD2
+printVCCVoltageMillivolt	KEYWORD2
+getTemperature	KEYWORD2
+
+ADC_PRESCALE	LITERAL1
+SHIFT_VALUE_FOR_REFERENCE	LITERAL1
+ADC_TEMPERATURE_CHANNEL_MUX	LITERAL1
+
 
 #######################################
 # Constants (LITERAL1)

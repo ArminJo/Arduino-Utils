@@ -1,6 +1,14 @@
 /*
  * HCSR04.h
  *
+ *  Supports 1 Pin mode as you get on the HY-SRF05 if you connect OUT to ground.
+ *  You can modify the HC-SR04 modules to 1 Pin mode by:
+ *  Old module with 3 16 pin chips: Connect Trigger and Echo direct or use a resistor < 4.7 kOhm.
+ *        If you remove both 10 kOhm pullup resistor you can use a connecting resistor < 47 kOhm, but I suggest to use 10 kOhm which is more reliable.
+ *  Old module with 3 16 pin chips but with no pullup resistors near the connector row: Connect Trigger and Echo with a resistor > 200 Ohm. Use 10 kOhm.
+ *  New module with 1 16 pin and 2 8 pin chips: Connect Trigger and Echo by a resistor > 200 Ohm and < 22 kOhm.
+ *  All modules: Connect Trigger and Echo by a resistor of 4.7 kOhm.
+ *
  *  Copyright (C) 2018-2020  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
@@ -33,7 +41,7 @@
 #define US_DISTANCE_DEFAULT_TIMEOUT_CENTIMETER 343   // Timeout of 20000L is 3.43 meter
 
 void initUSDistancePins(uint8_t aTriggerOutPin, uint8_t aEchoInPin = 0);
-void initUSDistancePin(uint8_t aTriggerOutEchoInPin);
+void initUSDistancePin(uint8_t aTriggerOutEchoInPin); // Using this determines one pin mode
 unsigned int getUSDistance(unsigned int aTimeoutMicros = US_DISTANCE_DEFAULT_TIMEOUT_MICROS);
 unsigned int getCentimeterFromUSMicroSeconds(unsigned int aDistanceMicros);
 unsigned int getUSDistanceAsCentiMeter(unsigned int aTimeoutMicros = US_DISTANCE_DEFAULT_TIMEOUT_MICROS);

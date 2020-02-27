@@ -4,7 +4,8 @@
  *  US Sensor (HC-SR04) functions.
  *  The non blocking functions are using pin change interrupts and need the PinChangeInterrupt library to be installed.
  *
- *  Supports also 1 Pin mode. You can modify the HCSR04 modules to 1 Pin mode by:
+ *  Supports 1 Pin mode as you get on the HY-SRF05 if you connect OUT to ground.
+ *  You can modify the HC-SR04 modules to 1 Pin mode by:
  *  Old module with 3 16 pin chips: Connect Trigger and Echo direct or use a resistor < 4.7 kOhm.
  *        If you remove both 10 kOhm pullup resistor you can use a connecting resistor < 47 kOhm, but I suggest to use 10 kOhm which is more reliable.
  *  Old module with 3 16 pin chips but with no pullup resistors near the connector row: Connect Trigger and Echo with a resistor > 200 Ohm. Use 10 kOhm.
@@ -36,7 +37,7 @@
 
 //#define DEBUG
 
-uint8_t sTriggerOutPin; // also used as aTriggerOutEchoInPin for mode HCSR04_MODE_1_PIN
+uint8_t sTriggerOutPin; // also used as aTriggerOutEchoInPin for 1 pin mode
 uint8_t sEchoInPin;
 
 uint8_t sHCSR04Mode = HCSR04_MODE_UNITITIALIZED;
@@ -55,7 +56,9 @@ void initUSDistancePins(uint8_t aTriggerOutPin, uint8_t aEchoInPin) {
         sHCSR04Mode = HCSR04_MODE_USE_2_PINS;
     }
 }
-
+/*
+ * Using this determines one pin mode
+ */
 void initUSDistancePin(uint8_t aTriggerOutEchoInPin) {
     sTriggerOutPin = aTriggerOutEchoInPin;
     sHCSR04Mode = HCSR04_MODE_USE_1_PIN;
@@ -103,7 +106,7 @@ unsigned int getUSDistance(unsigned int aTimeoutMicros) {
      */
     unsigned long tUSPulseMicros = pulseInLong(tEchoInPin, HIGH, aTimeoutMicros);
     if (tUSPulseMicros == 0) {
-// timeout happened
+// timeout happened -> change value to timeout value. This eases comparison with different distances.
         tUSPulseMicros = aTimeoutMicros;
     }
     return tUSPulseMicros;

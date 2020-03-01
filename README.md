@@ -1,7 +1,7 @@
 # [ArduinoUtils](https://github.com/ArminJo/Arduino-Utils)
 ### Version 1.0.0
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Build Status](https://travis-ci.org/ArminJo/Arduino-Utils.svg?branch=master)](https://travis-ci.org/ArminJo/Arduino-Utils)
+[![Build Status](https://github.com/ArminJo/Arduino-Utils/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/Arduino-Utils/actions)
 
 ## My utility collection for Arduino
 

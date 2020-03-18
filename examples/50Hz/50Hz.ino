@@ -25,14 +25,15 @@
 #define INFO
 
 void setup() {
-
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
     initTXPin();
 
-#ifdef INFO
+#  ifdef INFO
     writeString(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\n"));
-#endif
+#  endif
 
     toneWithTimer1PWM(50, true);
+#endif
 
     // let the cpu and flash sleep
     sleep_enable()

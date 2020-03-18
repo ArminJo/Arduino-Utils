@@ -27,6 +27,10 @@
  *  1*4 2*8 pin IC's              |                       | 10 kOhm pin 3+4 right IC    | -C4, R7=1.5MOhm, R10=0
  *  HY-SRF05 3 * 14 pin IC's      |                       | 10 kOhm pin 1+2 middle IC   | - bottom left C, R16=1.5MOhm, R15=?
  *
+ *  The CS100A module is not very sensitive at short or mid range but can detect up to 3m. Smallest distance is 2 cm.
+ *  The amplified analog signal is available at pin 5 and the comparator output at pin 6. There you can see other echoes.
+ *  3 Pin mode is difficult since it retriggers itself at distances below 7 cm.
+ *
  *  Copyright (C) 2018-2020  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *

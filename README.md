@@ -7,9 +7,11 @@
 
 ### ADCUtils.cpp
 - Fast and flexible ADC conversions.
+
 ### HCSR04
 - Blocking and **non-blocking** reading of HCSR04 US Sensors with timeouts and exact conversions.
-- Supports also **1 Pin mode** available with the HY-SRF05 or Parallax PING modules. 
+- Supports also **1 Pin mode** available with the HY-SRF05 or Parallax PING modules.
+
 #### You can modify the HCSR04 modules to 1 Pin mode by:
 1 Old module with 3 16 pin chips: Connect Trigger and Echo direct or use a resistor < 4.7 kOhm. 
 If you remove both 10 kOhm pullup resistor you can use a connecting resistor < 47 kOhm, but I suggest to use 10 kOhm which is more reliable.
@@ -19,15 +21,20 @@ If you remove both 10 kOhm pullup resistor you can use a connecting resistor < 4
 
 ### BlinkLed.cpp
 - Class for blinking one ore more LED's in different fashions.
+
 ### ShowInfo
 - Serial.print display of timer and other peripheral and system registers (to be extended :-)).
+
 ### AVRUtils.cpp
 - Sleep and sleep with watchdog functions.
 - Available Ram, Heap / Stack memory display.
+
 ### MillisUtils.cpp
 - Tweaking `millis()` after long running tasks in `noIterrupt()` context like NeoPixel output, ADC buffer reading etc.
+
 ### DebugLevel.h
 - Propagating debug levels for development. Supports level `TRACE, DEBUG, INFO, WARN and ERROR`. **Explains semantics of these levels**.
+
 ### ATtinyUtils.cpp
 - `changeDigisparkClock()` to use Digispark boards with standard ATtiny code like ATTinyCore by [Spence Konde](https://github.com/SpenceKonde/ATTinyCore). 
 It changes Digispark Bootloader clock settings to get the right CPU frequency and resets Digispark OCCAL tweak.
@@ -57,6 +64,7 @@ To access the Arduino library files from a sketch, you have to first use *Sketch
 Then navigate to the parallel `libraries` folder and select the library you want to access.<br/>
 The library files itself are located in the `src` sub-directory.<br/>
 If you did not yet store the example as your own sketch, then with *Ctrl+K* you are instantly in the right library folder.
+
 ## Consider to use [Sloeber](http://eclipse.baeyens.it/stable.php?OS=Windows) as IDE
 If you are using Sloeber as your IDE, you can easily define global symbols at *Properties/Arduino/CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)

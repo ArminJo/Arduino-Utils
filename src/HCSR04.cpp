@@ -4,6 +4,8 @@
  *  US Sensor (HC-SR04) functions.
  *  The non blocking functions are using pin change interrupts and need the PinChangeInterrupt library to be installed.
  *
+ *  58,23 us per centimeter and 17,17 cm/ms (forth and back).
+ *
  *  Supports 1 Pin mode as you get on the HY-SRF05 if you connect OUT to ground.
  *  You can modify the HC-SR04 modules to 1 Pin mode by:
  *  Old module with 3 16 pin chips: Connect Trigger and Echo direct or use a resistor < 4.7 kOhm.
@@ -125,6 +127,7 @@ unsigned int getUSDistance(unsigned int aTimeoutMicros) {
      *
      * Use pulseInLong, this uses micros() as counter, relying on interrupts being enabled, which is not disturbed by (e.g. the 1 ms timer) interrupts.
      * Only thing is that the pulse ends when we are in an interrupt routine, thus prolonging the measured pulse duration.
+     * I measured 6 us for the millis() and 14 to 20 us for the Servo signal generating interrupt. This is equivalent to around 1 to 3 mm distance.
      * Alternatively we can use pulseIn() in a noInterrupts() context, but this will effectively stop the millis() timer for duration of pulse / or timeout.
      */
 #if ! defined(__AVR__) || defined(TEENSYDUINO) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)

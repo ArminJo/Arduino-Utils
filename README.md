@@ -1,5 +1,7 @@
 # [ArduinoUtils](https://github.com/ArminJo/Arduino-Utils)
-### Version 1.0.0
+
+### [Version 1.0.0](https://github.com/ArminJo/Arduino-Utils/releases)
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Build Status](https://github.com/ArminJo/Arduino-Utils/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/Arduino-Utils/actions)
 
@@ -30,17 +32,21 @@ If you remove both 10 kOhm pullup resistor you can use a connecting resistor < 4
 - Available Ram, Heap / Stack memory display.
 
 ### MillisUtils.cpp
-- Tweaking `millis()` after long running tasks in `noIterrupt()` context like NeoPixel output, ADC buffer reading etc.
+Unifies millis() timer handling for Digispark, AttinyCore and Arduino cores.
+- Start, stop and modify milliseconds timer and value.
+- Functions to compensat `millis()` after long running tasks in `noIterrupt()` context like NeoPixel output, ADC buffer reading etc.
+- Blocking delayMilliseconds() function for use in noInterrupts context like ISR.
 
 ### DebugLevel.h
-- Propagating debug levels for development. Supports level `TRACE, DEBUG, INFO, WARN and ERROR`. **Explains semantics of these levels**.
+- Propagating debug levels for development. Supports level `TRACE, DEBUG, INFO, WARN and ERROR`. 
+- **Includes an explanation of semantics of these levels**.
 
 ### ATtinyUtils.cpp
-- `changeDigisparkClock()` to use Digispark boards with standard ATtiny code like ATTinyCore by [Spence Konde](https://github.com/SpenceKonde/ATTinyCore). 
-It changes Digispark Bootloader clock settings to get the right CPU frequency and resets Digispark OCCAL tweak.
 - `toneWithTimer1PWM()`.
 - `isBODSFlagExistent()` -> checking for ATtiny85 revision C.
 - fuse reading function.
+- `changeDigisparkClock()` to use Digispark boards with no Digispark core like e.g. ATTinyCore by [Spence Konde](https://github.com/SpenceKonde/ATTinyCore). 
+It changes Digispark Bootloader clock settings to get the right CPU frequency and resets Digispark OCCAL tweak. Consider to use new [optimized Digispark core](https://github.com/ArminJo/DigistumpArduino) instead. 
 
 ### Trace.cpp.h
 **Tracing an Arduino program** by printing each program counter value after executing one instruction.

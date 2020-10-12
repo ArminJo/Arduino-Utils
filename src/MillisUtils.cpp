@@ -1,8 +1,10 @@
 /*
  *  MillisUtils.cpp
  *
+ *  Unifies millis() timer handling for Digispark, AttinyCore and Arduino cores.
  *  - Start, stop and modify milliseconds timer and value.
- *  - blocking delayMilliseconds() function for use in noInterrupts context like ISR.
+ *  - Functions to compensate millis() timer value after long lasting ISR etc..
+ *  - Blocking delayMilliseconds() function for use in noInterrupts context like ISR.
  *
  *  Copyright (C) 2016-2020  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
@@ -24,6 +26,7 @@
  *
  */
 
+#if defined(__AVR__)
 #include <Arduino.h>
 
 #include "MillisUtils.h"
@@ -34,6 +37,72 @@
 #ifndef sbi
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
+
+/*
+ *
+ */
+void addToMillis(uint16_t aMillisToAdd) {
+    timer0_millis += aMillisToAdd;
+}
+
+/*
+ * disable Timer0 (millis()) overflow interrupt
+ * since the loop last exactly a multiple of 1024 micros, add a few statements between disabling and enabling
+ */
+void disableMillisInterrupt() {
+#if defined(TIMSK) && defined(TOIE)
+    cbi(TIMSK, TOIE);
+#else
+#error  Timer 0 overflow interrupt not disabled correctly
+#endif
+}
+
+/*
+ * Enable timer 0 overflow interrupt and compensate for disabled timer, if still disabled.
+ */
+void enableMillisInterrupt(uint16_t aMillisToAddForCompensation) {
+#if defined(TIMSK) && defined(TOIE)
+    if ((TIMSK & _BV(TOIE)) == 0) {
+        // still disabled -> compensate
+        timer0_millis += aMillisToAddForCompensation;
+    }
+    sbi(TIMSK, TOIE);
+#else
+#error  Timer 0 overflow interrupt not enabled correctly
+#endif
+}
+
+#endif //  defined(__AVR__)
+
+#if ! defined(TEENSYDUINO)
+void delayMilliseconds(unsigned int aMillis) {
+    for (unsigned int i = 0; i < aMillis; ++i) {
+        delayMicroseconds(1000);
+    }
+}
+
+/*
+ * returns true if aMillis were gone after the last return of true
+ * Can be used as a correct non blocking replacement for delay()
+ * Simple version, which can only be used at one place in code because of static variable.
+ */
+bool areMillisGone(unsigned int aMillis) {
+    static unsigned long sLastMillis;
+    if (millis() - sLastMillis >= aMillis) {
+        sLastMillis = millis();
+        return true;
+    }
+    return false;
+}
+
+bool areMillisGone(unsigned int aMillis, unsigned long * aLastMillisPtr) {
+    if (millis() - *aLastMillisPtr >= aMillis) {
+        *aLastMillisPtr = millis();
+        return true;
+    }
+    return false;
+}
+#endif // ! defined(TEENSYDUINO)
 
 /*
  * Function for speedTest
@@ -68,72 +137,3 @@
 //    }
 //    Serial.println(F(" seconds."));
 //}
-/*
- *
- */
-void addToMillis(uint16_t aMillisToAdd) {
-    timer0_millis += aMillisToAdd;
-}
-
-/*
- * disable Timer0 (millis()) overflow interrupt
- * since the loop last exactly a multiple of 1024 micros, add a few statements between disabling and enabling
- */
-void disableMillisInterrupt() {
-#if defined(TIMSK) && defined(TOIE0)
-    cbi(TIMSK, TOIE0);
-#elif defined(TIMSK0) && defined(TOIE0)
-    cbi(TIMSK0, TOIE0);
-#else
-#error  Timer 0 overflow interrupt not disabled correctly
-#endif
-}
-
-/*
- * Enable timer 0 overflow interrupt and compensate for disabled timer, if still disabled.
- */
-void enableMillisInterrupt(uint16_t aMillisToAddForCompensation) {
-#if defined(TIMSK) && defined(TOIE0)
-    if ((TIMSK & _BV(TOIE0)) == 0) {
-        // still disabled -> compensate
-        timer0_millis += aMillisToAddForCompensation;
-    }
-    sbi(TIMSK, TOIE0);
-#elif defined(TIMSK0) && defined(TOIE0)
-    if ((TIMSK0 & _BV(TOIE0)) == 0) {
-        // still disabled -> compensate
-        timer0_millis += aMillisToAddForCompensation;
-    }
-    sbi(TIMSK0, TOIE0);
-#else
-#error  Timer 0 overflow interrupt not enabled correctly
-#endif
-}
-
-void delayMilliseconds(unsigned int aMillis) {
-    for (unsigned int i = 0; i < aMillis; ++i) {
-        delayMicroseconds(1000);
-    }
-}
-
-/*
- * returns true if aMillis were gone after last return of true
- * Can be used as a non blocking replacement for delay()
- * Simple version, which can only be used at one place in code because of static variable.
- */
-bool areMillisGone(unsigned int aMillis) {
-    static unsigned long sLastMillis;
-    if (millis() - sLastMillis >= aMillis) {
-        sLastMillis = millis();
-        return true;
-    }
-    return false;
-}
-
-bool areMillisGone(unsigned int aMillis, unsigned long * aLastMillisPtr) {
-    if (millis() - *aLastMillisPtr >= aMillis) {
-        *aLastMillisPtr = millis();
-        return true;
-    }
-    return false;
-}

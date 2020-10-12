@@ -129,8 +129,7 @@ bool isBODSFlagExistent() {
 }
 
 /*
- * Code to change Digispark Bootloader clock settings to get the right CPU frequency
- * and to reset Digispark OCCAL tweak.
+ * Code to change clock settings to get the right CPU frequency if not already done by core. (menu clock select etc.)
  * Call it if you want to use the standard ATtiny library, BUT do not call it, if you need Digispark USB functions available for 16 MHz.
  */
 void changeDigisparkClock() {
@@ -141,38 +140,41 @@ void changeDigisparkClock() {
     if ((tLowFuse & (~FUSE_CKSEL3 | ~FUSE_CKSEL2 | ~FUSE_CKSEL1 )) == 0x0E) { // cannot use ~FUSE_CKSEL1 on right side :-(
 #endif
         /*
-         * Here we have High Frequency PLL Clock ( 16 MHz)
+         * Here we have High Frequency (PLL) Clock ( 16 MHz)
          */
 #if (F_CPU == 1000000)
-        // Divide 16 MHz Pll clock by 16 for Digispark Boards to get the requested 1 MHz
+        // Divide 16 MHz clock by 16 for Digispark Boards to get the requested 1 MHz
         clock_prescale_set(clock_div_16);
 //        CLKPR = (1 << CLKPCE);  // unlock function
-//        CLKPR = (1 << CLKPS2); // 0x04 -> %16
+//        CLKPR = (1 << CLKPS2); // 0x04 -> divide by 16
 #endif
 #if (F_CPU == 8000000)
-        // Divide 16 MHz Pll clock by 2 for Digispark Boards to get the requested 8 MHz
+        // Divide 16 MHz clock by 2 for Digispark Boards to get the requested 8 MHz
         clock_prescale_set(clock_div_2);
 //        CLKPR = (1 << CLKPCE);  // unlock function
-//        CLKPR = (1 << CLKPS0); // 0x01 -> %2
+//        CLKPR = (1 << CLKPS0); // 0x01 -> divide by 2
 #endif
     }
 
     /*
-     * Code to reset Digispark OCCAL tweak
+     * Code to reset micronucleus OCCAL tweak
      */
 #define  SIGRD  5 // required for boot_signature_byte_get()
     uint8_t tStoredOSCCAL = boot_signature_byte_get(1);
     if (OSCCAL != tStoredOSCCAL) {
 #ifdef DEBUG
         uint8_t tOSCCAL = OSCCAL;
+#endif
+        // retrieve the factory-stored oscillator calibration bytes to revert the Digispark OSCCAL tweak
+        OSCCAL = tStoredOSCCAL;
+#ifdef DEBUG
+        // write after resetting OSCCAL otherwise baud rate may be wrong
         writeString(F("Changed OSCCAL from "));
         writeUnsignedByteHex(tOSCCAL);
         writeString(F(" to "));
         writeUnsignedByteHex(tStoredOSCCAL);
-        writeCRLF();
+        writeCRLF();#
 #endif
-        // retrieve the factory-stored oscillator calibration bytes to revert the Digispark OSCCAL tweak
-        OSCCAL = tStoredOSCCAL;
     }
 }
 

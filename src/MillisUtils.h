@@ -25,6 +25,7 @@
 #define MILLIS_UTILS_H_
 
 #include <stdint.h>
+#if defined(__AVR__)
 
 //void speedTestWith1kCalls(void (*aFunctionUnderTest)(void));
 
@@ -32,10 +33,17 @@
  * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.
  */
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)  || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-#define timer0_millis millis_timer_millis // The ATTinyCore libraries use other variable name in wiring.c
+#define timer0_millis millis_timer_millis // The ATTinyCore + Digispark libraries use this variable name in wiring.c
 #endif
-#if defined(TIMSK) && !defined(TIMSK0) // some ATtinys
-#define TIMSK0 TIMSK
+#if defined(TIMSK0) && !defined(TIMSK) // some ATtinys
+#define TIMSK TIMSK0
+#endif
+
+#if defined(ARDUINO_AVR_DIGISPARK)
+    // Digispark uses timer1 for millis()
+#define TOIE TOIE1
+#else
+#define TOIE TOIE0
 #endif
 
 extern volatile unsigned long timer0_millis;
@@ -43,6 +51,8 @@ extern volatile unsigned long timer0_millis;
 void disableMillisInterrupt();
 void addToMillis(uint16_t aMillisToAdd);
 void enableMillisInterrupt(uint16_t aMillisToAddForCompensation = 0);
+#endif //  defined(__AVR__)
+
 void delayMilliseconds(unsigned int aMillis);
 bool areMillisGone(unsigned int aMillis);
 bool areMillisGone(unsigned int aMillis, unsigned long * aLastMillisPtr);

@@ -87,6 +87,7 @@ void initUSDistancePin(uint8_t aTriggerOutEchoInPin) {
 
 /*
  * Start of standard blocking implementation using pulseInLong() since PulseIn gives wrong (too small) results :-(
+ * @return 0 if uninitialized or timeout happened
  */
 unsigned int getUSDistance(unsigned int aTimeoutMicros) {
     if (sHCSR04Mode == HCSR04_MODE_UNITITIALIZED) {
@@ -137,10 +138,6 @@ unsigned int getUSDistance(unsigned int aTimeoutMicros) {
 #else
     unsigned long tUSPulseMicros = pulseInLong(tEchoInPin, HIGH, aTimeoutMicros);
 #endif
-    if (tUSPulseMicros == 0) {
-// timeout happened -> change value to timeout value. This eases comparison with different distances.
-        tUSPulseMicros = aTimeoutMicros;
-    }
     return tUSPulseMicros;
 }
 
@@ -151,18 +148,13 @@ unsigned int getCentimeterFromUSMicroSeconds(unsigned int aDistanceMicros) {
 
 /*
  * @return  Distance in centimeter @20 degree (time in us/58.25)
- *          aTimeoutMicros/58.25 if timeout happens
- *          0 if pins are not initialized
+ *          0 if timeout or pins are not initialized
+ *
  *          timeout of 5825 micros is equivalent to 1 meter
  *          Default timeout of 20000 micro seconds is 3.43 meter
  */
 unsigned int getUSDistanceAsCentiMeter(unsigned int aTimeoutMicros) {
-    unsigned int tDistanceMicros = getUSDistance(aTimeoutMicros);
-    if (tDistanceMicros == 0) {
-// timeout happened
-        tDistanceMicros = aTimeoutMicros;
-    }
-    return (getCentimeterFromUSMicroSeconds(tDistanceMicros));
+    return (getCentimeterFromUSMicroSeconds(getUSDistance(aTimeoutMicros)));
 }
 
 // 58,23 us per centimeter (forth and back)
@@ -172,6 +164,10 @@ unsigned int getUSDistanceAsCentiMeterWithCentimeterTimeout(unsigned int aTimeou
     return getUSDistanceAsCentiMeter(tTimeoutMicros);
 }
 
+/*
+ * Trigger US sensor as fast as sensible if called in a loop to test US devices.
+ * trigger pulse is equivalent to 10 cm and then we wait for 20 ms / 3.43 meter
+ */
 void testUSSensor(uint16_t aSecondsToTest) {
     for (long i = 0; i < aSecondsToTest * 50; ++i) {
         digitalWrite(sTriggerOutPin, HIGH);

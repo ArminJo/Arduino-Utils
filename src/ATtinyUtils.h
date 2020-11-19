@@ -113,7 +113,7 @@ bool isBODLevelBelow2_7Volt();
 bool isBODSFlagExistent();
 void changeDigisparkClock();
 
-#endif //  defined (__AVR_ATtiny85__)
+#endif //  defined(__AVR_ATtiny85__)
 #endif /* ATTINYUTILS_H_ */
 
 #pragma once

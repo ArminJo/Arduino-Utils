@@ -7,8 +7,18 @@
 
 ## My utility collection for Arduino
 
+### SimpleEMAFilters.cpp
+- A fixed set of 10 **ultrafast EMA (Exponential Moving Average) filters** and display routines for Arduino Plotter.
+ 8 filters requires only 1 to 2 microseconds, in contrast to the floating point implemenation used for comparison, which takes 24 to 34 µs.<br/>
+ An alternative fixed point implementation is included which requires 4 µs.
+ 
+All filters can be applied to your signal and the results can then easily be displayed in the Arduino Plotter.
+
 ### ADCUtils.cpp
-- Fast and flexible ADC conversions.
+Fast and flexible ADC conversions. Intelligent **handling of reference switching**.
+- Functions for easy **oversampling**.
+- Function for easy getting the maximum value of measurements.
+- Functions for getting **temperature and VCC voltage**.
 
 ### HCSR04
 - Blocking and **non-blocking** reading of HCSR04 US Sensors with timeouts and exact conversions.
@@ -65,19 +75,21 @@ library available as an Arduino library.
 
 ### The very useful *digitalWriteFast.h* file from  [Watterott electronic](https://github.com/watterott/Arduino-Libs).
 
-# Modifying library properties
-To access the Arduino library files from a sketch, you have to first use *Sketch/Show Sketch Folder (Ctrl+K)* in the Arduino IDE.<br/>
-Then navigate to the parallel `libraries` folder and select the library you want to access.<br/>
-The library files itself are located in the `src` sub-directory.<br/>
-If you did not yet store the example as your own sketch, then with *Ctrl+K* you are instantly in the right library folder.
+### Modifying compile options with Arduino IDE
+First use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
+If you did not yet stored the example as your own sketch, then you are instantly in the right library folder.<br/>
+Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
+In both cases the library files itself are located in the `src` directory.<br/>
 
-## Consider to use [Sloeber](http://eclipse.baeyens.it/stable.php?OS=Windows) as IDE
-If you are using Sloeber as your IDE, you can easily define global symbols at *Properties/Arduino/CompileOptions*.<br/>
+### Modifying compile options with Sloeber IDE
+If you are using Sloeber as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 # Revision History
-### Version 1.0.0
-- Initial Arduino library version
+
+### Version 1.0.0 - work in progress
+- Added unions.
+- Changed distance return value for overflow to 0.
 
 # Travis CI
 The ArduinoUtils library examples are built on Travis CI for the following boards:

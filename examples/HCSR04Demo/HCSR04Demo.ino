@@ -1,5 +1,6 @@
 /*
- *  HCSR04Test.cpp
+ *  HCSR04Demo
+ *  .cpp
  *
  *  Gets the USDistance and give tone feedback. Test 2 and 1 pin mode of HY-SRF05 and (modified) HC-SR04.
  *

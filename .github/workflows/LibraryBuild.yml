@@ -25,7 +25,7 @@ jobs:
 
     env:
       # Comma separated list without double quotes around the list.
-      REQUIRED_LIBRARIES: Servo
+      REQUIRED_LIBRARIES: Servo,ATtinySerialOut
 
     strategy:
       matrix:
@@ -48,11 +48,11 @@ jobs:
         #############################################################################################################
         include:
           - arduino-boards-fqbn: arduino:avr:uno
-            sketches-exclude: 50Hz # Comma separated list of (unique substrings of) example names to exclude in build
+            sketches-exclude: 50Hz,AVRUtilsDemo # Comma separated list of example names to exclude in build
 
           - arduino-boards-fqbn: ATTinyCore:avr:attinyx5:chip=85,clock=1internal
             platform-url: http://drazzy.com/package_drazzy.com_index.json
-            sketches-exclude: TraceTest,InterruptsTimings  # Comma separated list of (unique substrings of) example names to exclude in build
+            sketches-exclude: TraceTest,InterruptsTimings,EMAFilterTest  # Comma separated list of example names to exclude in build
 
       # Do not cancel all jobs / architectures if one job fails
       fail-fast: false

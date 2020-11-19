@@ -178,4 +178,4 @@ void changeDigisparkClock() {
     }
 }
 
-#endif //  defined (__AVR_ATtiny85__)
+#endif //  defined(__AVR_ATtiny85__)

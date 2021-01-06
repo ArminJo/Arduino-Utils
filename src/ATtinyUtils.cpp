@@ -177,5 +177,8 @@ void changeDigisparkClock() {
 #endif
     }
 }
-
+#elif defined(ARDUINO_ARCH_APOLLO3)
+    void AttinyUtilsDummyToAvoidBFDAssertions(){
+        ;
+    }
 #endif //  defined(__AVR_ATtiny85__)

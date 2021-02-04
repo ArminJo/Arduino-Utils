@@ -53,8 +53,8 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)
-    delay(2000); // To be able to connect Serial monitor after reset and before first printout
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+    delay(2000); // To be able to connect Serial monitor after reset or power up and before first printout
 #endif
 
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
@@ -75,6 +75,17 @@ void loop() {
     Serial.println(F("--------------------------------"));
     Serial.println(F("Each ADC conversion takes 104us."));
     Serial.println(F("--------------------------------"));
+
+    Serial.println();
+    Serial.println(F("-------------------------"));
+    Serial.println(F("Test VCC reading 2 times. Resolution is 20 mV!"));
+    Serial.print(F("VCC="));
+    Serial.print(getVCCVoltageMillivolt());
+    Serial.println(F("mv"));
+    Serial.print(F("VCC="));
+    Serial.print(getVCCVoltageMillivolt());
+    Serial.println(F("mv"));
+
     uint8_t i;
 
     /*

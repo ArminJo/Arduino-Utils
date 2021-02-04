@@ -121,7 +121,7 @@ bool areMillisGone(unsigned int aMillis, unsigned long * aLastMillisPtr) {
  */
 void speedTestWith1kCalls(void (*aFunctionUnderTest)(void)) {
     uint32_t tMillisStart = millis();
-    for (uint8_t i = 0; i < 100; ++i) {
+    for (uint_fast8_t i = 0; i < 100; ++i) {
         // unroll 10 times
         aFunctionUnderTest();
         aFunctionUnderTest();

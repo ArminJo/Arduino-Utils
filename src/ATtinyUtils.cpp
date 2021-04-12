@@ -20,7 +20,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+#if defined(__AVR__) && defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 
 //#define DEBUG
 #ifdef DEBUG
@@ -173,7 +173,7 @@ void changeDigisparkClock() {
         writeUnsignedByteHex(tOSCCAL);
         writeString(F(" to "));
         writeUnsignedByteHex(tStoredOSCCAL);
-        writeCRLF();#
+        writeCRLF();
 #endif
     }
 }

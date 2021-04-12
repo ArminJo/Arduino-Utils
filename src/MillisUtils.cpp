@@ -26,10 +26,10 @@
  *
  */
 
-#if defined(__AVR__)
 #include <Arduino.h>
-
 #include "MillisUtils.h"
+
+#if defined(__AVR__)
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -105,7 +105,7 @@ bool areMillisGone(unsigned int aMillis) {
     return false;
 }
 
-bool areMillisGone(unsigned int aMillis, unsigned long * aLastMillisPtr) {
+bool areMillisGone(unsigned int aMillis, unsigned long *aLastMillisPtr) {
     if (millis() - *aLastMillisPtr >= aMillis) {
         *aLastMillisPtr = millis();
         return true;

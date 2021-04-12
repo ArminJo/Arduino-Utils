@@ -1,6 +1,6 @@
 # [ArduinoUtils](https://github.com/ArminJo/Arduino-Utils)
 
-### [Version 1.0.0](https://github.com/ArminJo/Arduino-Utils/releases)
+### [Version 1.0.0](https://github.com/ArminJo/Arduino-Utils/archive/master.zip)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Build Status](https://github.com/ArminJo/Arduino-Utils/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/Arduino-Utils/actions)
@@ -18,7 +18,8 @@ All filters can be applied to your signal and the results can then easily be dis
 Fast and flexible ADC conversions. Intelligent **handling of reference switching**.
 - Functions for easy **oversampling**.
 - Function for easy getting the maximum value of measurements.
-- Functions for getting **temperature and VCC voltage**.
+- Functions for getting **temperature and VCC voltage**.  For VCC, resolution is only 20 millivolt!
+
 
 ### HCSR04
 - Blocking and **non-blocking** reading of HCSR04 US Sensors with timeouts and exact conversions.
@@ -76,7 +77,7 @@ library available as an Arduino library.
 ### The very useful *digitalWriteFast.h* file from  [Watterott electronic](https://github.com/watterott/Arduino-Libs).
 
 ### Modifying compile options with Arduino IDE
-First use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
+First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
 If you did not yet stored the example as your own sketch, then you are instantly in the right library folder.<br/>
 Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
 In both cases the library files itself are located in the `src` directory.<br/>

@@ -21,6 +21,8 @@
  *
  */
 
+#if defined(__AVR__)
+
 #include <Arduino.h>
 
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
@@ -704,5 +706,6 @@ void TimerRegisterDump(void) {
     Timer2RegisterDump();
 }
 #endif
+#endif // AVR
 
 #endif // !defined(__AVR_ATmega32U4__)

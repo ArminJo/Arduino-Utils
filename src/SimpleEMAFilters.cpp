@@ -7,6 +7,11 @@
  *  as well as 1 fixed point (around 2 digits) and 1 floating point filter with exponent 5.
  *  It includes print functions compatible with Arduino Serial Plotter.
  *
+ *  Links: https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+ *  https://en.wikipedia.org/wiki/Double_exponential_moving_average
+ *  https://github.com/popcornell/Arduino-Multiplierless-EMA-filter
+ *  https://www.dsprelated.com/blogimages/RickLyons/Exponential_Averaging_FIGURE2.gif
+ *
  *  Copyright (C) 2020  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
@@ -179,6 +184,9 @@ void testFilters(int16_t aInputValue) {
 #ifdef MEASURE_TIMING
     digitalWriteFast(TIMING_OUT_PIN, HIGH);
 #endif
+    /*
+     * The
+     */
     sLowpassFloat += (aInputValue - sLowpassFloat) / 32.0; // 24 to 34 us
 #ifdef MEASURE_TIMING
     digitalWriteFast(TIMING_OUT_PIN, LOW);

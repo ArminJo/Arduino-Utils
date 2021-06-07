@@ -487,11 +487,12 @@ void printFuses(void) {
         Serial.print(F(" not"));
     }
     Serial.println(F(" enabled"));
+    Serial.println();
 }
 
 void printBODSFlagExistence() {
     /*
-     * Turn off the brown-out detector - this works only for ATtini85 revision C, which is quite unpopular (2019) on Chinese boards.
+     * Turn off the brown-out detector - this works only for ATtini85 revision C, which I have not seen in the wild.
      */
     uint8_t tMcucrValue = MCUCR | _BV(BODS) | _BV(BODSE);  // set to one
     MCUCR = tMcucrValue; // set both flags to one

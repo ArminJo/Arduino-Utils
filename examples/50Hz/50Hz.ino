@@ -17,7 +17,7 @@
 
 #include <Arduino.h>
 
-#include "ATtinySerialOut.h"
+#include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
 #include "ATtinyUtils.h" // for toneWithTimer1PWM()
 #include <avr/sleep.h>
 

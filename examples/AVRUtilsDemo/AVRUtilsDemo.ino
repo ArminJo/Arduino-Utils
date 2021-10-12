@@ -43,7 +43,7 @@
 
 #include "AVRUtils.h"
 
-#include "ATtinySerialOut.h"
+#include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
 
 
 //#include "ShowInfo.h"

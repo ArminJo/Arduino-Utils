@@ -32,6 +32,15 @@ If you remove both 10 kOhm pullup resistor you can use a connecting resistor < 4
 3 New module with 1 16 pin and 2 8 pin chips: Connect Trigger and Echo by a resistor > 200 Ohm and < 22 kOhm.
 4 All modules: Connect Trigger and Echo by a resistor of 4.7 kOhm.
 
+### MeasureVoltageAndResistance.hpp
+Measures voltage and resistance with 1 mV and 2 Ohm resolution at the lower end.<br/>
+First voltage is measured. If voltage is zero, then resistance to ground is measured using 5 volt (VCC) and 10 kOhm or 100 kOhm supply.
+
+### Fritzing board
+![Fritzing board](extras/VoltAndOhmmeter_Steckplatine.png)
+### Fritzing schematics
+![Fritzing schematics](extras/VoltAndOhmmeter_Schaltplan.png)
+
 ### BlinkLed.cpp
 - Class for blinking one ore more LED's in different fashions.
 
@@ -59,8 +68,10 @@ Unifies millis() timer handling for Digispark, AttinyCore and Arduino cores.
 - `changeDigisparkClock()` to use Digispark boards with no Digispark core like e.g. ATTinyCore by [Spence Konde](https://github.com/SpenceKonde/ATTinyCore). 
 It changes Digispark Bootloader clock settings to get the right CPU frequency and resets Digispark OCCAL tweak. Consider to use new [optimized Digispark core](https://github.com/ArminJo/DigistumpArduino) instead. 
 
-### Trace.cpp.h
+### AvrTracing.hpp
 **Tracing an Arduino program** by printing each program counter value after executing one instruction.
+
+## Utilities available as separate Arduino library
 
 ### [ATtinySerialOut.cpp](https://github.com/ArminJo/ATtinySerialOut/src)
 Minimal bit-bang send serial
@@ -68,7 +79,7 @@ Minimal bit-bang send serial
 The utility for serial output for ATtinies is contained in the [ATtinySerialOut](https://github.com/ArminJo/ATtinySerialOut)
 library available as an Arduino library.
 
-### [EasyButtonAtInt01.cpp.h](https://github.com/ArminJo/EasyButtonAtInt01/src)
+### [EasyButtonAtInt01.hpp](https://github.com/ArminJo/EasyButtonAtInt01/src)
 - Arduino library for handling push buttons just connected between ground and INT0 and / or INT1 pin.
 - No external pullup, **no polling needed**.
 The utility for easy button handling for ATmegas or ATtinies is contained in the [EasyButtonAtInt01](https://github.com/ArminJo/EasyButtonAtInt01)

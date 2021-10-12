@@ -2,6 +2,8 @@
  *  VoltAndOhmmeter.cpp
  *
  *  Realizes an volt and ohmmeter with 6mV and 2 Ohm resolution at the lower end.
+ *  First voltage is measured.
+ *  If voltage is zero, then resistance to ground is measured using 5 volt (VCC) and 10 kOhm or 100 kOhm supply.
  *
  *  Copyright (C) 2021  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
@@ -25,7 +27,7 @@
 
 /*
  *  SCHEMATIC
- *            +----o A3 open/VCC(R) | open(U)
+ *            +----o A3  open/VCC (for R measurement) | open (for U measurement)
  *            |
  *            -
  *           | |
@@ -33,23 +35,23 @@
  *           | |
  *            -
  *            |     _____
- * Input <----+----|_____|---o input(R) | open(U)
- *            |     100 k - just to protect the pin
- *    ^       -
- *    |      | |
- *    |      | | R1 (100 kOhm)
- *    |      | |
- *    -       -
- *   | |      |
- *   | | Rx   +---o A0 VCC(R) | input(U)
- *   | |      |
- *    -       -
- *    |      | |
- *    o GND  | | R2 (22k)
+ * Input <----+----|_____|---o  A1 input (for R measurement) | open (for U measurement)
+ *   ^        |     100 k - just to protect the pin
+ *   |        -
+ *   |       | |
+ *   |       | | R1 (100 kOhm)
+ *   |       | |
+ *   -        -
+ *  | |       |
+ *  | | Rx    +---o A0  VCC(R) | input(U)
+ *  | |       |
+ *   -        -
+ *   |       | |
+ *   o GND   | | R2 (22k)
  *           | |
  *            -
  *            |
- *            +---o A2 open(R) | GND(U)
+ *            +---o A2  open(R) | GND(U)
  *
  *  The ratio of R1 to Rx is equal the Ratio of (1023 - x) to x
  *
@@ -61,12 +63,14 @@
 
 #include "ADCUtils.h"
 
-#define VERSION_EXAMPLE "1.0"
+#define VERSION_EXAMPLE "1.1"
+
+//#define NO_PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE
 
 /*
  * Activate the type of LCD you use
  */
-//#define USE_PARALELL_LCD
+//#define USE_PARALLEL_LCD
 //#define USE_SERIAL_LCD
 /*
  * Define the size of your LCD
@@ -80,7 +84,7 @@
 #if defined(USE_SERIAL_LCD)
 #include <LiquidCrystal_I2C.h> // Use an up to date library version which has the init method
 #endif
-#if defined(USE_PARALELL_LCD)
+#if defined(USE_PARALLEL_LCD)
 #include <LiquidCrystal.h>
 #endif
 
@@ -95,22 +99,22 @@
 #define LCD_ROWS 4
 #endif
 
-#if defined(USE_SERIAL_LCD) && defined(USE_PARALELL_LCD)
+#if defined(USE_SERIAL_LCD) && defined(USE_PARALLEL_LCD)
 #error Cannot use parallel and serial LCD simultaneously
 #endif
-#if defined(USE_SERIAL_LCD) || defined(USE_PARALELL_LCD)
+#if defined(USE_SERIAL_LCD) || defined(USE_PARALLEL_LCD)
 #define USE_LCD
 #endif
 
 #if defined(USE_SERIAL_LCD)
 LiquidCrystal_I2C myLCD(0x27, LCD_COLUMNS, LCD_ROWS);  // set the LCD address to 0x27 for a 20 chars and 2 line display
 #endif
-#if defined(USE_PARALELL_LCD)
+#if defined(USE_PARALLEL_LCD)
 LiquidCrystal myLCD(4, 5, 6, 7, 8, 9);
 #endif
 
 // Include it after LCD settings, it requires the macros USE_LCD and USE_2004_LCD to be set
-#include "MeasureVoltageAndResistance.cpp.h"
+#include "MeasureVoltageAndResistance.hpp"
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -138,11 +142,11 @@ void setup() {
     myLCD.clear();
     myLCD.backlight();
 #endif
-#if defined(USE_PARALELL_LCD)
+#if defined(USE_PARALLEL_LCD)
     myLCD.begin(LCD_COLUMNS, LCD_ROWS);
 #endif
 
-#if defined(USE_SERIAL_LCD) || defined(USE_PARALELL_LCD)
+#if defined(USE_SERIAL_LCD) || defined(USE_PARALLEL_LCD)
     myLCD.print(F("Volt+Ohm meter"));
     myLCD.setCursor(0, 1);
     myLCD.print(F(VERSION_EXAMPLE " " __DATE__));

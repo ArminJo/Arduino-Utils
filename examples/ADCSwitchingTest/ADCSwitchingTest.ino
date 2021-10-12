@@ -62,23 +62,23 @@ void setup() {
      * Print usage
      */
     Serial.println();
-    Serial.println(F("Connect ADC0 with 1MOhm to VCC"));
-    Serial.println(F("Connect ADC1 with 100kOhm to VCC"));
-    Serial.println(F("Connect ADC2 with 1MOhm to VCC"));
-    Serial.println(F("Connect ADC3 with 100kOhm to VCC"));
-    Serial.println(F("Connect ADC" STR(CHANNEL_VOLTAGE_DIVIDER) " with 1MOhm to VCC and 100kOhm to GND"));
+    Serial.println(F("Connect ADC0 with 1 MOhm to VCC"));
+    Serial.println(F("Connect ADC1 with 100 kOhm to VCC"));
+    Serial.println(F("Connect ADC2 with 1 MOhm to VCC"));
+    Serial.println(F("Connect ADC3 with 100 kOhm to VCC"));
+    Serial.println(F("Connect ADC" STR(CHANNEL_VOLTAGE_DIVIDER) " with 1 MOhm to VCC and 100 kOhm to GND"));
     Serial.println();
 }
 
 void loop() {
 
     Serial.println(F("--------------------------------"));
-    Serial.println(F("Each ADC conversion takes 104us."));
+    Serial.println(F("Each ADC conversion takes 104 us."));
     Serial.println(F("--------------------------------"));
 
     Serial.println();
     Serial.println(F("-------------------------"));
-    Serial.println(F("Test VCC reading 2 times. Resolution is 20 mV!"));
+    Serial.println(F("Test VCC reading 2 times. Resolution is only 20 mV!"));
     Serial.print(F("VCC="));
     Serial.print(getVCCVoltageMillivolt());
     Serial.println(F("mv"));
@@ -127,7 +127,7 @@ void loop() {
     Serial.println();
     Serial.println(
             F(
-                    "Read 100kOhm VCC input at pin A" STR(CHANNEL_VCC_100_K_OHM) " after switching reference from INTERNAL/1.1V to DEFAULT/VCC."));
+                    "Read 100 kOhm VCC input at pin A" STR(CHANNEL_VCC_100_K_OHM) " after switching reference from INTERNAL/1.1V to DEFAULT/VCC."));
     printADCValueArray();
 
     /*
@@ -145,7 +145,7 @@ void loop() {
     Serial.println();
     Serial.println(
             F(
-                    "Read 100kOhm GND input at pin A" STR(CHANNEL_GND_100_K_OHM) " after switching reference from INTERNAL/1.1V to DEFAULT/VCC."));
+                    "Read 100 kOhm GND input at pin A" STR(CHANNEL_GND_100_K_OHM) " after switching reference from INTERNAL/1.1V to DEFAULT/VCC."));
     printADCValueArray();
 
     /*
@@ -158,27 +158,27 @@ void loop() {
     /*
      * 100kOhm VCC input -> 0 to 1 sample until value is stable since the first sample reads always 1022
      */
-    doMeasurement(CHANNEL_VCC_100_K_OHM, F("100kOhm VCC input at pin A" STR(CHANNEL_VCC_100_K_OHM)), PRECHARGE_WITH_GND, 0);
+    doMeasurement(CHANNEL_VCC_100_K_OHM, F("100 kOhm VCC input at pin A" STR(CHANNEL_VCC_100_K_OHM)), PRECHARGE_WITH_GND, 0);
 
     /*
      * 1MOhm VCC input -> 3 samples /312 microseconds until value is stable
      */
-    doMeasurement(CHANNEL_VCC_1_M_OHM, F("1MOhm VCC input at pin A" STR(CHANNEL_VCC_1_M_OHM)), PRECHARGE_WITH_GND, 120);
+    doMeasurement(CHANNEL_VCC_1_M_OHM, F("1 MOhm VCC input at pin A" STR(CHANNEL_VCC_1_M_OHM)), PRECHARGE_WITH_GND, 120);
 
     /*
      * 1MOhm VCC input -> 3 samples /312 microseconds until value is stable
      */
-    doMeasurement(CHANNEL_VCC_1_M_OHM, F("1MOhm VCC input at pin A" STR(CHANNEL_VCC_1_M_OHM)), PRECHARGE_WITH_GND, 100);
+    doMeasurement(CHANNEL_VCC_1_M_OHM, F("1 MOhm VCC input at pin A" STR(CHANNEL_VCC_1_M_OHM)), PRECHARGE_WITH_GND, 100);
 
     /*
      * 1MOhm VCC input -> 2 samples / 208 microseconds until value is stable
      */
-    doMeasurement(CHANNEL_VCC_1_M_OHM, F("1MOhm VCC input at pin A" STR(CHANNEL_VCC_1_M_OHM)), PRECHARGE_WITH_GND, 50);
+    doMeasurement(CHANNEL_VCC_1_M_OHM, F("1 MOhm VCC input at pin A" STR(CHANNEL_VCC_1_M_OHM)), PRECHARGE_WITH_GND, 50);
 
     /*
      * 1MOhm VCC input-> 3 - 4 samples / 312 microseconds until value is stable
      */
-    doMeasurement(CHANNEL_VCC_1_M_OHM, F("1MOhm VCC input at pin A" STR(CHANNEL_VCC_1_M_OHM)), PRECHARGE_WITH_GND, 0);
+    doMeasurement(CHANNEL_VCC_1_M_OHM, F("1 MOhm VCC input at pin A" STR(CHANNEL_VCC_1_M_OHM)), PRECHARGE_WITH_GND, 0);
 
     /*
      * Read 1.1 volt reference input -> 0 samples until value 237 is stable
@@ -224,17 +224,17 @@ void loop() {
     /*
      * Read 100kOhm GND input -> unbelievable 0 microseconds until value is stable
      */
-    doMeasurement(CHANNEL_GND_100_K_OHM, F("100kOhm GND input at pin A" STR(CHANNEL_GND_100_K_OHM)), PRECHARGE_WITH_VCC, 0);
+    doMeasurement(CHANNEL_GND_100_K_OHM, F("100 kOhm GND input at pin A" STR(CHANNEL_GND_100_K_OHM)), PRECHARGE_WITH_VCC, 0);
 
     /*
      * Read 1MOhm GND input -> 3 samples / 312 microseconds until value is stable
      */
-    doMeasurement(CHANNEL_GND_1_M_OHM, F("1MOhm GND input at pin A" STR(CHANNEL_GND_1_M_OHM)), PRECHARGE_WITH_VCC, 100);
+    doMeasurement(CHANNEL_GND_1_M_OHM, F("1 MOhm GND input at pin A" STR(CHANNEL_GND_1_M_OHM)), PRECHARGE_WITH_VCC, 100);
 
     /*
      * Read 1MOhm GND input -> 3 samples / 312 microseconds until value is stable
      */
-    doMeasurement(CHANNEL_GND_1_M_OHM, F("1MOhm GND input at pin A" STR(CHANNEL_GND_1_M_OHM)), PRECHARGE_WITH_VCC, 0);
+    doMeasurement(CHANNEL_GND_1_M_OHM, F("1 MOhm GND input at pin A" STR(CHANNEL_GND_1_M_OHM)), PRECHARGE_WITH_VCC, 0);
 
     /*
      * Read 1.1 volt reference input -> 7 samples /  microseconds until value 237 is stable
@@ -302,7 +302,7 @@ void printADCValueArray(uint16_t tAdditionalDelay) {
         Serial.print(tIndexOfFirstStable);
         Serial.print(F(" Time="));
         Serial.print(104 * tIndexOfFirstStable);
-        Serial.print(F("us "));
+        Serial.print(F(" us "));
     }
     // Print values
     Serial.print(F(" ADC="));
@@ -335,7 +335,7 @@ void printADCVoltageValueArray(uint16_t tAdditionalDelay) {
         Serial.print(tIndexOfFirstStable);
         Serial.print(F(" Time="));
         Serial.print((104 + tAdditionalDelay) * tIndexOfFirstStable);
-        Serial.print(F("us "));
+        Serial.print(F(" us "));
     }
 
     Serial.print(F(" VCC[mV]="));

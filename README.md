@@ -4,15 +4,57 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Build Status](https://github.com/ArminJo/Arduino-Utils/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/Arduino-Utils/actions)
+![Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_Arduino-Utils)
 
 ## My utility collection for Arduino
 
 ### SimpleEMAFilters.cpp
-- A fixed set of 10 **ultrafast EMA (Exponential Moving Average) filters** and display routines for Arduino Plotter.
- 8 filters requires only 1 to 2 microseconds, in contrast to the floating point implemenation used for comparison, which takes 24 to 34 탎.<br/>
- An alternative fixed point implementation is included which requires 4 탎.
- 
-All filters can be applied to your signal and the results can then easily be displayed in the Arduino Plotter.
+- A fixed set of 6 **ultrafast EMA (Exponential Moving Average) filters** which require only **1 to 2 microseconds**.
+- 3 derived filters (highpass and 2 bandpasses) by just subtracting one lowpass from input (highpass) or from another lowpass (bandpass).
+- Display routines for Arduino Plotter.
+An EMA filter behaves like an RC lowpass filter with RC = SamplePeriod((1-alpha)/alpha) see [here](https://en.wikipedia.org/wiki/Low-pass_filter#Simple_infinite_impulse_response_filter).<br/>
+The alpha's for the implemented **ultrafast EMA filters** are 1/2, 1/4, 1/8, 1/16, 1/32, and 1/256.
+#### For a 1 kHz sampling rate (1/1000s sampling interval) we get the following equivalent cutoff (-3db) frequencies:
+- 1/2 -> 160 Hz
+- 1/4 -> 53 Hz (160 / 3)
+- 1/8 -> 22.7 Hz (160 / 7)
+- 1/16 -> 10.6 Hz
+- 1/32 -> 5.13 Hz
+- 1/256 -> 0.624 Hz (160 / 255)
+
+#### Plotter output representing e.g. a 20 Hz square / sine wave at a sample rate of 1 ms (or 40 Hz at 0.5 ms and so on)
+Arduino Plotter output for a rectangle input signal with a amplitude of +/- 100. E.g. Lowpass3 is the one with alpha 1/8 implemented by `>> 3`.
+![ArduinoPlotter output](pictures/LowPass_HighInput.png)
+Arduino Plotter output for a rectangle input signal with very low amplitude of +/- 20 where you see clipping effects due to the limited resolution of the used 16 bit math. The Lowpass3_int32 and Lowpass5_int32 are 32 bit fixed point implementations for higher resolution which requires 4.2 탎.
+![ArduinoPlotter output](pictures/LowPass_LowInput.png)
+Arduino Plotter output for a sine input signal with a amplitude of +/- 100. Note the **-3db attenuation for the Lowpass3** value which represent a filter of 22.7 Hz in this example.
+![ArduinoPlotter output](pictures/LowPass_SineInput.png)
+Arduino Plotter output for a triangle input signal with a amplitude of +/- 100. Note that Lowpass5 is almost a perfect sine.
+![ArduinoPlotter output](pictures/LowPass_TriangleInput.png)
+
+***Attention!** The 16 bit implementations are limited to a **maximum input value of +/- 16383** for rectangular input (which is the worst input case). The reason is, that the term `InputValue - Lowpass3` must always fit into a 16 bit signed integer.
+
+The floating point implementation of the 1/32 EMA filter takes 24 to 34 탎.<br/>
+
+All filters are applied to your test signal calling `doFiltersStep(int16_t)` and the results can in turn easily be displayed in the Arduino Plotter.<br/>
+There is no function implemented for one EMA filter, since it is better to implement it directly by e.g.
+```
+int16_t Lowpass3;
+int32_t Lowpass5_int32;
+..
+Lowpass3 += ((InputValue - Lowpass3) + (1 << 2)) >> 3; // 1.8 us, alpha = 0.125, cutoff frequency 22.7 Hz @1kHz
+Lowpass5 += ((InputValue - Lowpass5) + (1 << 4)) >> 5; // 2.5 us, alpha = 1/32 0.03125, cutoff frequency 5.13 Hz @1kHz
+Lowpass5_int32 += ((((int32_t) InputValue) << 8) - Lowpass5_int32) >> 5; // Fixed point 4.2 us, value is Lowpass5_int32 >> 8
+Lowpass8_int32 += ((((int32_t) InputValue) << 16) - Lowpass8_int32) >> 8; // Fixed point 2.0 us because of fast shift, value is Lowpass8_int32 >> 16
+```
+#### Related Links
+- https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+- https://www.dsprelated.com/blogimages/RickLyons/Exponential_Averaging_FIGURE2.gif
+- https://www.norwegiancreations.com/2015/10/tutorial-potentiometers-with-arduino-and-filtering/
+- https://www.norwegiancreations.com/2016/08/double-exponential-moving-average-filter-speeding-up-the-ema/
+- https://www.norwegiancreations.com/2016/03/arduino-tutorial-simple-high-pass-band-pass-and-band-stop-filtering/
+- https://github.com/popcornell/Arduino-Multiplierless-EMA-filter
+
 
 ### ADCUtils.cpp
 Fast and flexible ADC conversions. Intelligent **handling of reference switching**.

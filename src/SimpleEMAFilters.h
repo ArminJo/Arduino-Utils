@@ -34,17 +34,21 @@
 #define PRINT_EMA_4         0x10
 #define PRINT_EMA_5         0x20
 #define PRINT_EMA_8         0x40
-#define PRINT_EMA_FIX       0x80
+
 #define PRINT_EMA_FLOAT     0x1000
+
+#define PRINT_EMA_3_32      0x2000
+#define PRINT_EMA_5_32      0x4000
 
 #define PRINT_HIGH_PASS     0x100
 #define PRINT_BAND_PASS_1_3 0x200
 #define PRINT_BAND_PASS_3_4 0x400
 
 #define PRINT_ALL_FILTERS           0xFFFF
+#define PRINT_ALL_SIMPLE_FILTERS    0x0FFF
 #define PRINT_LOW_PASS_1_TO_8       0x7F
 #define PRINT_LOW_PASS_1_3_5_8      (PRINT_INPUT | PRINT_EMA_1 | PRINT_EMA_3 | PRINT_EMA_5 | PRINT_EMA_8)
-#define PRINT_LOW_PASS_5_FIX_FLOAT  (PRINT_INPUT | PRINT_EMA_5 | PRINT_EMA_FIX | PRINT_EMA_FLOAT)
+#define PRINT_LOW_PASS_5_32_FLOAT  (PRINT_INPUT | PRINT_EMA_5 | PRINT_EMA_5_32 | PRINT_EMA_FLOAT)
 
 extern int16_t sInputValueForPrint;
 
@@ -53,17 +57,17 @@ extern int16_t sLowpass2;
 extern int16_t sLowpass3;
 extern int16_t sLowpass4;
 extern int16_t sLowpass5;
-extern int32_t sLowpass8FP;
+extern int32_t sLowpass8FixPoint;
 
 // only required if we must deal with small values (< 32)
-extern int32_t sLowpassShift8;
+extern int32_t sLowpass5Shift8;
 extern int16_t sLowpassFP;
 
-extern float sLowpassFloat;
+extern float sLowpassFloat5;
 
 void printFiltersCaption(uint16_t aPrintMask = PRINT_ALL_FILTERS);
 void printFiltersResults(uint16_t aPrintMask = PRINT_ALL_FILTERS);
-void testFilters(int16_t aInputValue);
+void doFiltersStep(int16_t aInputValue);
 
 #endif // SIMPLE_EMA_FILTERS_H_
 

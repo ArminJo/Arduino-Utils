@@ -20,7 +20,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -58,9 +58,13 @@
  *      Rx = R1 * x / (1023-x)
  *
  */
+
+#ifndef _MEASURE_VOLTAGE_AND_RESISTANCE_HPP
+#define _MEASURE_VOLTAGE_AND_RESISTANCE_HPP
+
 #include <Arduino.h>
 
-#include "ADCUtils.h"
+#include "ADCUtils.hpp"
 
 //#define NO_PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE // enables print of voltage at resistor under measurement (0 to VCC).
 
@@ -79,15 +83,15 @@
 #endif
 
 // Fixed attenuator for voltage measurement
-#ifndef RESISTOR_TO_VOLTAGE_PIN_KOHM
+#if !defined(RESISTOR_TO_VOLTAGE_PIN_KOHM)
 #define RESISTOR_TO_VOLTAGE_PIN_KOHM   100 // R1
 #endif
-#ifndef RESISTOR_FROM_VOLTAGE_PIN_TO_GROUND_PIN_KOHM
+#if !defined(RESISTOR_FROM_VOLTAGE_PIN_TO_GROUND_PIN_KOHM)
 #define RESISTOR_FROM_VOLTAGE_PIN_TO_GROUND_PIN_KOHM  22 // R2
 #endif
 
 // fixed resistors for resistor measurement
-#ifndef RESISTOR_2_TO_VCC_KOHM
+#if !defined(RESISTOR_2_TO_VCC_KOHM)
 #define RESISTOR_2_TO_VCC_KOHM    10 // R3
 #endif
 #define RESISTOR_1_TO_VCC_KOHM    RESISTOR_TO_VOLTAGE_PIN_KOHM // R1
@@ -152,7 +156,7 @@ uint16_t measureVoltage(uint16_t tVCCVoltageMillivolt) {
         }
     }
 #pragma GCC diagnostic pop
-#ifdef DEBUG
+#if defined(DEBUG)
         Serial.print(F("Raw="));
         Serial.println(tInputVoltageRaw);
 #endif
@@ -215,7 +219,7 @@ bool measureResistance(uint16_t aVCCVoltageMillivolt, ResistanceMeasurementResul
                 * REFERENCE_SWITCHING_VOLTAGE_THRESHOLD_MILLIVOLT * 1000)
                 / ((RESISTOR_1_TO_VCC_KOHM + RESISTOR_2_TO_VCC_KOHM) * (5000 - REFERENCE_SWITCHING_VOLTAGE_THRESHOLD_MILLIVOLT));
         if (tRxOhm < tResistanceForThresholdVoltage) {
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.print(tResistanceForThresholdVoltage);
     Serial.print(F(" Ohm "));
 #endif
@@ -237,7 +241,7 @@ bool measureResistance(uint16_t aVCCVoltageMillivolt, ResistanceMeasurementResul
          */
         tInputVoltage = tInputReading * 1100L / 1023;
     }
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.print(tInputReading);
     Serial.println(F(" LSB"));
 #endif
@@ -266,7 +270,7 @@ void MeasureVoltageAndResistance() {
     // to enable discharge of stray capacitance
     pinMode(VOLTAGE_MEASUREMENT_PIN, OUTPUT);
     digitalWrite(VOLTAGE_GROUND_PIN, LOW);
-#ifdef DEBUG
+#if defined(DEBUG)
     uint16_t tVCCVoltageMillivolt = printVCCVoltageMillivolt(&Serial);
 #else
     uint16_t tVCCVoltageMillivolt = getVCCVoltageMillivolt();
@@ -289,7 +293,7 @@ void MeasureVoltageAndResistance() {
 #  if defined(USE_2004_LCD)
         myLCD.setCursor(0, 3);
         myLCD.print(tStringForPrint);
-#    ifndef NO_PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE
+#    if !defined(NO_PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE)
         myLCD.print(F(" V          ")); // clears old resistor output
 #    else
         myLCD.print(F(" V ")); // clears old resistor output
@@ -329,7 +333,7 @@ void MeasureVoltageAndResistance() {
         myLCD.print(F(" k\xF4    "));
 #  endif
 #endif
-#ifndef NO_PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE
+#if !defined(NO_PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE)
         Serial.print(F(" at: "));
         Serial.print(tResistanceMeasurementResult.VoltageAtResistor, 3);
         Serial.println(F(" V"));
@@ -388,3 +392,5 @@ void printVoltageAndResistanceUsage() {
     Serial.println(F(" mV resolution is 5 mV, below 1050 mV resolution is 1 mV"));
     Serial.println();
 }
+
+#endif // _MEASURE_VOLTAGE_AND_RESISTANCE_HPP

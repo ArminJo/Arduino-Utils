@@ -6,21 +6,33 @@
 [![Build Status](https://github.com/ArminJo/Arduino-Utils/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/Arduino-Utils/actions)
 ![Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_Arduino-Utils)
 
-## My utility collection for Arduino
+# My utility collection for Arduino
 
-### SimpleEMAFilters.cpp
-- A fixed set of 6 **ultrafast EMA (Exponential Moving Average) filters** which require only **1 to 2 microseconds**.
+## [SimpleEMAFilters.hpp](https://github.com/ArminJo/Arduino-Utils/blob/master/src/SimpleEMAFilters.hpp#L66)
+An EMA (**Exponential Moving Average**) filter behaves like an RC lowpass filter with RC = SamplePeriod((1-alpha)/alpha) see [here](https://en.wikipedia.org/wiki/Low-pass_filter#Simple_infinite_impulse_response_filter).<br/>
+An EMA filter is implemented by e.g. the following statement:
+
+```c++
+int16_t Lowpass5 += ((InputValue - Lowpass5) >> 5;
+```
+which takes 2.5 us on a 16 MHz Arduino Uno.
+
+The alpha's for the implemented **ultrafast EMA filters** are 1/2, 1/4, 1/8, 1/16, 1/32 and 1/256 corresponding to the shift values of 1, 2, 3, 4, 5 and 8.
+
+#### For a 1 kHz sampling rate (1/1000s sampling interval) we get the following equivalent cutoff (-3db) frequencies:
+- For alpha 1/2 (shift 1) -> 160 Hz
+- 1/4 -> 53 Hz (160 Hz / 3)
+- 1/8 -> 22.7 Hz (160 Hz / 7)
+- 1/16 -> 10.6 Hz (160 Hz / 15)
+- 1/32 -> 5.13 Hz (160 Hz / 31)
+- 1/256 -> 0.624 Hz (160 Hz / 255)
+
+### The SimpleEMAFilters.hpp contains:
+- A fixed set of 6 **ultrafast** EMA (Exponential Moving Average) filters which require only **1 to 2 microseconds**.
 - 3 derived filters (highpass and 2 bandpasses) by just subtracting one lowpass from input (highpass) or from another lowpass (bandpass).
 - Display routines for Arduino Plotter.
-An EMA filter behaves like an RC lowpass filter with RC = SamplePeriod((1-alpha)/alpha) see [here](https://en.wikipedia.org/wiki/Low-pass_filter#Simple_infinite_impulse_response_filter).<br/>
-The alpha's for the implemented **ultrafast EMA filters** are 1/2, 1/4, 1/8, 1/16, 1/32, and 1/256.
-#### For a 1 kHz sampling rate (1/1000s sampling interval) we get the following equivalent cutoff (-3db) frequencies:
-- 1/2 -> 160 Hz
-- 1/4 -> 53 Hz (160 / 3)
-- 1/8 -> 22.7 Hz (160 / 7)
-- 1/16 -> 10.6 Hz
-- 1/32 -> 5.13 Hz
-- 1/256 -> 0.624 Hz (160 / 255)
+
+All implemented filters are applied at once to the input test signal calling `doFiltersStep(int16_t aInput)` and the results can in turn easily be displayed in the Arduino Plotter.
 
 #### Plotter output representing e.g. a 20 Hz square / sine wave at a sample rate of 1 ms (or 40 Hz at 0.5 ms and so on)
 Arduino Plotter output for a rectangle input signal with a amplitude of +/- 100. E.g. Lowpass3 is the one with alpha 1/8 implemented by `>> 3`.
@@ -32,14 +44,13 @@ Arduino Plotter output for a sine input signal with a amplitude of +/- 100. Note
 Arduino Plotter output for a triangle input signal with a amplitude of +/- 100. Note that Lowpass5 is almost a perfect sine.
 ![ArduinoPlotter output](pictures/LowPass_TriangleInput.png)
 
-***Attention!** The 16 bit implementations are limited to a **maximum input value of +/- 16383** for rectangular input (which is the worst input case). The reason is, that the term `InputValue - Lowpass3` must always fit into a 16 bit signed integer.
-
 The floating point implementation of the 1/32 EMA filter takes 24 to 34 µs.<br/>
 
-All filters are applied to your test signal calling `doFiltersStep(int16_t)` and the results can in turn easily be displayed in the Arduino Plotter.<br/>
 There is no function implemented for one EMA filter, since it is better to implement it directly by e.g.
-```
+
+```c++
 int16_t Lowpass3;
+int16_t Lowpass5;
 int32_t Lowpass5_int32;
 ..
 Lowpass3 += ((InputValue - Lowpass3) + (1 << 2)) >> 3; // 1.8 us, alpha = 0.125, cutoff frequency 22.7 Hz @1kHz
@@ -47,6 +58,9 @@ Lowpass5 += ((InputValue - Lowpass5) + (1 << 4)) >> 5; // 2.5 us, alpha = 1/32 0
 Lowpass5_int32 += ((((int32_t) InputValue) << 8) - Lowpass5_int32) >> 5; // Fixed point 4.2 us, value is Lowpass5_int32 >> 8
 Lowpass8_int32 += ((((int32_t) InputValue) << 16) - Lowpass8_int32) >> 8; // Fixed point 2.0 us because of fast shift, value is Lowpass8_int32 >> 16
 ```
+
+***Attention!** The 16 bit implementations are limited to a **maximum input value of +/- 16383** for rectangular input (which is the worst input case). The reason is, that the term `InputValue - Lowpass3` must always fit into a 16 bit signed integer.
+
 #### Related Links
 - https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
 - https://www.dsprelated.com/blogimages/RickLyons/Exponential_Averaging_FIGURE2.gif
@@ -129,14 +143,15 @@ library available as an Arduino library.
 
 ### The very useful *digitalWriteFast.h* file from  [Watterott electronic](https://github.com/watterott/Arduino-Libs).
 
-### Modifying compile options with Arduino IDE
+### Changing include (*.h) files with Arduino IDE
 First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
-If you did not yet stored the example as your own sketch, then you are instantly in the right library folder.<br/>
+If you have not yet saved the example as your own sketch, then you are instantly in the right library folder.<br/>
 Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
-In both cases the library files itself are located in the `src` directory.<br/>
+In both cases the library source and include files are located in the libraries `src` directory.<br/>
+The modification must be renewed for each new library version!
 
 ### Modifying compile options with Sloeber IDE
-If you are using Sloeber as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
+If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 # Revision History

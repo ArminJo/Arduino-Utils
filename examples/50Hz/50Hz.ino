@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
 
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -28,7 +28,7 @@ void setup() {
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
     initTXPin();
 
-#  ifdef INFO
+#  if defined(INFO)
     writeString(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\n"));
 #  endif
 

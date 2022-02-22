@@ -1,7 +1,7 @@
 /*
  * ADCUtils.h
  *
- *  Copyright (C) 2016-2021  Armin Joachimsmeyer
+ *  Copyright (C) 2016-2022  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -17,12 +17,12 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
-#ifndef SRC_ADCUTILS_H_
-#define SRC_ADCUTILS_H_
+#ifndef _ADC_UTILS_H
+#define _ADC_UTILS_H
 
 #if defined(__AVR__) && (!defined(__AVR_ATmega4809__))
 #include <Arduino.h>
@@ -45,14 +45,6 @@
 #define ADC_PRESCALE ADC_PRESCALE64
 #elif (F_CPU == 16000000)
 #define ADC_PRESCALE ADC_PRESCALE128
-#endif
-
-/*
- * By replacing this value with the voltage you measured a the AREF pin after a conversion
- * with INTERNAL you can calibrate your ADC readout. For my Nanos I measured e.g. 1060 mV and 1093 mV.
- */
-#ifndef ADC_INTERNAL_REFERENCE_MILLIVOLT
-#define ADC_INTERNAL_REFERENCE_MILLIVOLT 1100L    // Value measured at the AREF pin
 #endif
 
 /*
@@ -79,9 +71,12 @@
 
 #define SHIFT_VALUE_FOR_REFERENCE REFS2
 #define MASK_FOR_ADC_REFERENCE (_BV(REFS0) | _BV(REFS1) | _BV(REFS2))
+#define MASK_FOR_ADC_CHANNELS (_BV(MUX0) | _BV(MUX1) | _BV(MUX2) | _BV(MUX3))
 #else // AVR_ATtiny85
+
 #define SHIFT_VALUE_FOR_REFERENCE REFS0
 #define MASK_FOR_ADC_REFERENCE (_BV(REFS0) | _BV(REFS1))
+#define MASK_FOR_ADC_CHANNELS (_BV(MUX0) | _BV(MUX1) | _BV(MUX2) | _BV(MUX3))
 #endif
 
 // Temperature channel definitions - 1 LSB / 1 degree Celsius
@@ -119,6 +114,7 @@
 uint16_t readADCChannel(uint8_t aChannelNumber);
 uint16_t readADCChannelWithReference(uint8_t aChannelNumber, uint8_t aReference);
 uint16_t waitAndReadADCChannelWithReference(uint8_t aChannelNumber, uint8_t aReference);
+uint16_t waitAndReadADCChannelWithReferenceAndRestoreADMUXAndReference(uint8_t aChannelNumber, uint8_t aReference);
 uint16_t readADCChannelWithOversample(uint8_t aChannelNumber, uint8_t aOversampleExponent);
 void setADCMultiplexerAndReferenceForNextConversion(uint8_t aChannelNumber, uint8_t aReference);
 uint16_t readADCChannelWithReferenceOversample(uint8_t aChannelNumber, uint8_t aReference, uint8_t aOversampleExponent);
@@ -146,6 +142,5 @@ float getTemperature(void);
 
 #endif // defined(ADATE)
 #endif //  defined(__AVR__)
-#endif /* SRC_ADCUTILS_H_ */
-
+#endif // _ADC_UTILS_H
 #pragma once

@@ -21,7 +21,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -61,9 +61,7 @@
  */
 #include <Arduino.h>
 
-#include "ADCUtils.h"
-
-#define VERSION_EXAMPLE "1.1"
+#define VERSION_EXAMPLE "1.2"
 
 //#define NO_PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE
 
@@ -82,6 +80,12 @@
  * Imports and definitions for LCD
  */
 #if defined(USE_SERIAL_LCD)
+#  if defined(USE_SOFT_I2C_MASTER) // Must be declared globally. Saves 440 bytes
+#define I2C_HARDWARE 1 // use I2C Hardware
+#define I2C_PULLUP 1
+#define I2C_FASTMODE 1
+#include "SoftI2CMaster.h"
+#  endif
 #include <LiquidCrystal_I2C.h> // Use an up to date library version which has the init method
 #endif
 #if defined(USE_PARALLEL_LCD)
@@ -126,7 +130,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino

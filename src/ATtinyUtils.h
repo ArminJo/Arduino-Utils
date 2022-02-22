@@ -17,7 +17,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -49,8 +49,8 @@
 //                    +----+
 //
 
-#ifndef ATTINYUTILS_H_
-#define ATTINYUTILS_H_
+#ifndef _ATTINY_UTILS_H
+#define _ATTINY_UTILS_H
 
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 
@@ -58,7 +58,7 @@
 #include <avr/io.h>
 
 #if defined(ARDUINO_AVR_DIGISPARK)
-#  ifndef LED_BUILTIN
+#  if !defined(LED_BUILTIN)
 #define LED_BUILTIN PB1
 #  endif
 
@@ -114,6 +114,5 @@ bool isBODSFlagExistent();
 void changeDigisparkClock();
 
 #endif //  defined(__AVR_ATtiny85__)
-#endif /* ATTINYUTILS_H_ */
-
+#endif // _ATTINY_UTILS_H
 #pragma once

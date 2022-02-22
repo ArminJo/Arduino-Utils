@@ -17,13 +17,13 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 #if defined(__AVR__) && defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 
 //#define DEBUG
-#ifdef DEBUG
+#if defined(DEBUG)
 // Should be first include to avoid unwanted use of Serial object defined in HardwareSerial
 #include "ATtinySerialOut.h"
 #endif
@@ -162,12 +162,12 @@ void changeDigisparkClock() {
 #define  SIGRD  5 // required for boot_signature_byte_get()
     uint8_t tStoredOSCCAL = boot_signature_byte_get(1);
     if (OSCCAL != tStoredOSCCAL) {
-#ifdef DEBUG
+#if defined(DEBUG)
         uint8_t tOSCCAL = OSCCAL;
 #endif
         // retrieve the factory-stored oscillator calibration bytes to revert the Digispark OSCCAL tweak
         OSCCAL = tStoredOSCCAL;
-#ifdef DEBUG
+#if defined(DEBUG)
         // write after resetting OSCCAL otherwise baud rate may be wrong
         writeString(F("Changed OSCCAL from "));
         writeUnsignedByteHex(tOSCCAL);

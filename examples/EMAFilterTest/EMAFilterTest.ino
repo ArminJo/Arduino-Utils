@@ -19,50 +19,55 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
 #include <Arduino.h>
 
-#include "SimpleEMAFilters.h"
+#define MEASURE_TIMING
+//#define TIMING_OUT_PIN  12
+#include "SimpleEMAFilters.hpp"
 
-//#define TEST_WITH_RANDOM_INPUT
-//#define TEST_WITH_SINE_INPUT
+// If no signal is selected, square wave is taken
+#define TEST_WITH_SINE_INPUT
 //#define TEST_WITH_TRIANGLE_INPUT
+//#define TEST_WITH_RANDOM_INPUT
 
-// Choose which filter to show
-#if defined(TEST_WITH_RANDOM_INPUT)
-#define FILTER_TO_SHOW      PRINT_LOW_PASS_1_3_5
-#elif defined(TEST_WITH_SINE_INPUT) || defined(TEST_WITH_TRIANGLE_INPUT)
-#define FILTER_TO_SHOW      PRINT_ALL_SIMPLE_FILTERS
-#else
-#define FILTER_TO_SHOW      PRINT_ALL_FILTERS
-//#define FILTER_TO_SHOW      PRINT_LOW_PASS_1_TO_5
-//#define FILTER_TO_SHOW      PRINT_LOW_PASS_5_FIX_FLOAT
-#endif
+#define INPUT_PERIOD_SAMPLES 200 // Signal with 50 Samples per period
 
 // Adjust to see behavior for small values
-#define MAXIMUM_INPUT_VALUE 100 // Here the 3 lines for filter5 are almost identical
+//#define MAXIMUM_INPUT_VALUE 100 // Here the 3 lines for filter5 are almost identical
 //#define MAXIMUM_INPUT_VALUE 16385L // Here we get overflows for square wave at `InputValue - Lowpass3` while changing sign
 //#define MAXIMUM_INPUT_VALUE 16384L // Here we get overflows for square wave at `InputValue - Lowpass3` while changing from - to + value
 //#define MAXIMUM_INPUT_VALUE 16383L // The maximum value without overflows for square wave and fast 16 bit filters
-//#define MAXIMUM_INPUT_VALUE 20
+#define MAXIMUM_INPUT_VALUE 20
 
-#define INPUT_PERIOD_SAMPLES 50 // Signal with 50 Samples per period
-
-#define VERSION_EXAMPLE "1.0"
+// Choose which filter to show - see SimpleEMAFilters.h
+#if defined(TEST_WITH_RANDOM_INPUT)
+#define FILTER_TO_SHOW      PRINT_LOW_PASS_1_3_5
+#elif defined(TEST_WITH_SINE_INPUT) || defined(TEST_WITH_TRIANGLE_INPUT)
+//#define FILTER_TO_SHOW      PRINT_ALL_SIMPLE_FILTERS
+#define FILTER_TO_SHOW      PRINT_LOW_PASS_16_32
+#else
+//#define FILTER_TO_SHOW      PRINT_ALL_FILTERS
+//#define FILTER_TO_SHOW      PRINT_LOW_PASS_1_TO_8
+//#define FILTER_TO_SHOW      PRINT_LOW_PASS_1_3_5_8
+#define FILTER_TO_SHOW      PRINT_LOW_PASS_16_32
+#endif
 
 void setup() {
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
 
-//    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+//    Serial.println(F("START " __FILE__ "\r\nUsing library version " VERSION_SIMPLE_EMA_FILTERS " from " __DATE__)));
 
     // Print caption for Arduino Plotter
+    Serial.print("Lowpass8_int32_1");
+    Serial.print(" ");
     printFiltersCaption(FILTER_TO_SHOW);
 }
 
@@ -70,15 +75,16 @@ void setup() {
  * Create a signal with a period of 50, which is equivalent to a frequency of 20 Hz for a 1 kHz sampling frequency.
  * Except for random :-)
  */
+int32_t sLowpass8_int32_1;
 void loop() {
     static uint8_t sLoopCount = 0; // 0 to 49
     static int16_t sInput;
 
-#ifdef TEST_WITH_RANDOM_INPUT
+#if defined(TEST_WITH_RANDOM_INPUT)
     sInput = random(MAXIMUM_INPUT_VALUE);
 
 #elif defined(TEST_WITH_SINE_INPUT)
-    sInput = MAXIMUM_INPUT_VALUE * sin(((float) sLoopCount * TWO_PI) / 50.0);
+    sInput = MAXIMUM_INPUT_VALUE * sin(((float) sLoopCount * TWO_PI) / INPUT_PERIOD_SAMPLES);
 
 #elif defined(TEST_WITH_TRIANGLE_INPUT)
     if (sLoopCount < INPUT_PERIOD_SAMPLES / 2) {
@@ -93,6 +99,7 @@ void loop() {
         sInput = -MAXIMUM_INPUT_VALUE;
     }
 #endif
+    sLowpass8_int32_1 += (((((int32_t) sInput) << 8) - sLowpass8_int32_1) + (1 << 7)) >> 8; // Fixed point 2.0 us because of fast shift :-)
 
     doFiltersStep(sInput);
     sLoopCount++;
@@ -100,12 +107,14 @@ void loop() {
         sLoopCount = 0;
     }
 
-#ifdef TEST_WITH_RANDOM_INPUT
+#if defined(TEST_WITH_RANDOM_INPUT)
     // print every value additionally 3 times to make results more visible
     for (int i = 0; i < 3; ++i) {
         printFiltersResults(FILTER_TO_SHOW);
     }
 #endif
+    Serial.print(sLowpass8_int32_1 >> 8);
+    Serial.print(" ");
     printFiltersResults(FILTER_TO_SHOW);
 
     delay(10);

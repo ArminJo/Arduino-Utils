@@ -16,8 +16,8 @@ initUSDistancePins	KEYWORD2
 initUSDistancePin	KEYWORD3
 getUSDistance	KEYWORD2
 getCentimeterFromUSMicroSeconds	KEYWORD2
-getUSDistanceAsCentiMeter	KEYWORD2
-getUSDistanceAsCentiMeterWithCentimeterTimeout	KEYWORD2
+getUSDistanceAsCentimeter	KEYWORD2
+getUSDistanceAsCentimeterWithCentimeterTimeout	KEYWORD2
 testUSSensor	KEYWORD2
 
 US_DISTANCE_DEFAULT_TIMEOUT_MICROS	LITERAL1

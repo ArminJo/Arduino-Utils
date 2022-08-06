@@ -76,4 +76,3 @@ void printFiltersResults(uint16_t aPrintMask = PRINT_ALL_FILTERS);
 void doFiltersStep(int16_t aInputValue);
 
 #endif // _SIMPLE_EMA_FILTERS_H
-#pragma once

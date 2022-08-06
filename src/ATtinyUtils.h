@@ -115,4 +115,3 @@ void changeDigisparkClock();
 
 #endif //  defined(__AVR_ATtiny85__)
 #endif // _ATTINY_UTILS_H
-#pragma once

@@ -310,9 +310,9 @@ void Information(void) {
 #endif
 
     Serial.println(F("UTF-8 test:"));
-    Serial.println(F("    Micro µ µ µ µ µ µ µ µ µ µ"));
-    Serial.println(F("    Euro  € € € € € € € € € €"));
-    Serial.println(F("    (c)   © © © © © © © © © ©"));
+    Serial.println(F("    Micro �"));
+    Serial.println(F("    Euro  �"));
+    Serial.println(F("    (c)   �"));
 
     Serial.println(F("-----------"));
 #endif

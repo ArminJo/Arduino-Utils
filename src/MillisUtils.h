@@ -60,4 +60,3 @@ bool areMillisGone(unsigned int aMillis);
 bool areMillisGone(unsigned int aMillis, unsigned long * aLastMillisPtr);
 
 #endif // _MILLIS_UTILS_H
-#pragma once

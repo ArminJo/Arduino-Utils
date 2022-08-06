@@ -88,4 +88,3 @@ void TimerRegisterDump(void);
 #endif // !defined(__AVR_ATmega32U4__)
 
 #endif // _SHOW_INFO_H
-#pragma once

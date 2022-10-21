@@ -107,18 +107,18 @@ Fast and flexible ADC conversions. **Intelligent handling of delays for referenc
 
 ### You can modify the HCSR04 modules to 1 Pin mode:
 1. Old module with 3 16 pin chips:<br/>
-   Connect Trigger and Echo direct or use a resistor < 4.7 kOhm.
-   If you remove both 10 kOhm pullup resistor you can use a connecting resistor < 47 kOhm, but I suggest to use 10 kOhm which is more reliable.
+   Connect Trigger and Echo direct or use a resistor < 4.7 k&ohm;.
+   If you remove both 10 k&ohm; pullup resistor you can use a connecting resistor < 47 k&ohm;, but I suggest to use 10 k&ohm; which is more reliable.
 2. Old module with 3 16 pin chips but with no pullup resistors near the connector row:<br/>
-   Connect Trigger and Echo with a resistor > 200 Ohm. Use 10 kOhm.
+   Connect Trigger and Echo with a resistor > 200 &ohm;. Use 10 k&ohm;.
 3. New module with 1 16 pin and 2 8 pin chips:<br/>
-   Connect Trigger and Echo by a resistor > 200 Ohm and < 22 kOhm.
+   Connect Trigger and Echo by a resistor > 200 &ohm; and < 22 k&ohm;.
 4. All modules:<br/>
-   Connect Trigger and Echo by a resistor of 4.7 kOhm.
+   Connect Trigger and Echo by a resistor of 4.7 k&ohm;.
 
 # MeasureVoltageAndResistance.hpp
-Measures voltage and resistance with **1 mV and 2 Ohm resolution** at the lower end.<br/>
-First voltage is measured. If voltage is zero, then the unknown resistance to ground is measured using the 5 volt (VCC) supply with internal/series resistance of 10 kOhm or 100 kOhm.
+Measures voltage and resistance with **1 mV and 2 &ohm; resolution** at the lower end.<br/>
+First voltage is measured. If voltage is zero, then the unknown resistance to ground is measured using the 5 volt (VCC) supply with internal/series resistance of 10 k&ohm; or 100 k&ohm;.
 
 ### Fritzing board
 ![Fritzing board](extras/VoltAndOhmmeter_Steckplatine.png)

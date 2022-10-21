@@ -5,8 +5,8 @@
  *  You can modify the HC-SR04 modules to 1 Pin mode by:
  *  Old module with 3 16 pin chips: Connect Trigger and Echo direct or use a resistor < 4.7 kOhm.
  *        If you remove both 10 kOhm pullup resistor you can use a connecting resistor < 47 kOhm, but I suggest to use 10 kOhm which is more reliable.
- *  Old module with 3 16 pin chips but with no pullup resistors near the connector row: Connect Trigger and Echo with a resistor > 200 Ohm. Use 10 kOhm.
- *  New module with 1 16 pin and 2 8 pin chips: Connect Trigger and Echo by a resistor > 200 Ohm and < 22 kOhm.
+ *  Old module with 3 16 pin chips but with no pullup resistors near the connector row: Connect Trigger and Echo with a resistor > 200 ohm. Use 10 kOhm.
+ *  New module with 1 16 pin and 2 8 pin chips: Connect Trigger and Echo by a resistor > 200 ohm and < 22 kOhm.
  *  All modules: Connect Trigger and Echo by a resistor of 4.7 kOhm.
  *
  *  Copyright (C) 2018-2020  Armin Joachimsmeyer
@@ -34,7 +34,7 @@
 
 #include <stdint.h>
 
-#define DISTANCE_TIMEOUT_RESULT                0
+#define DISTANCE_TIMEOUT_RESULT                   0
 #define US_DISTANCE_DEFAULT_TIMEOUT_MICROS    20000
 #define US_DISTANCE_DEFAULT_TIMEOUT_CENTIMETER  343   // Timeout of 20000L is 3.43 meter
 
@@ -44,10 +44,14 @@
 
 void initUSDistancePins(uint8_t aTriggerOutPin, uint8_t aEchoInPin = 0);
 void initUSDistancePin(uint8_t aTriggerOutEchoInPin); // Using this determines one pin mode
+void setHCSR04OnePinMode(bool aUseOnePinMode);
 unsigned int getUSDistance(unsigned int aTimeoutMicros = US_DISTANCE_DEFAULT_TIMEOUT_MICROS);
 unsigned int getCentimeterFromUSMicroSeconds(unsigned int aDistanceMicros);
+uint8_t getMillisFromUSCentimeter(unsigned int aDistanceCentimeter);
 unsigned int getUSDistanceAsCentimeter(unsigned int aTimeoutMicros = US_DISTANCE_DEFAULT_TIMEOUT_MICROS);
 unsigned int getUSDistanceAsCentimeterWithCentimeterTimeout(unsigned int aTimeoutCentimeter);
+bool getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged(unsigned int aTimeoutCentimeter,
+        unsigned int aMillisBetweenMeasurements, Print *aSerial);
 void testUSSensor(uint16_t aSecondsToTest);
 
 #if (defined(USE_PIN_CHANGE_INTERRUPT_D0_TO_D7) | defined(USE_PIN_CHANGE_INTERRUPT_D8_TO_D13) | defined(USE_PIN_CHANGE_INTERRUPT_A0_TO_A5))
@@ -64,5 +68,10 @@ extern volatile unsigned long sUSPulseMicros;
 #define HCSR04_MODE_USE_1_PIN       1
 #define HCSR04_MODE_USE_2_PINS      2
 extern uint8_t sHCSR04Mode;
+extern unsigned long sLastUSDistanceMeasurementMillis; // Only written by getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged()
+extern unsigned int sLastUSDistanceCentimeter; // Only written by getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged()
+extern unsigned int sUSDistanceMicroseconds;
+extern unsigned int sUSDistanceCentimeter;
+extern uint8_t sUsedMillisForMeasurement; // is optimized out if not used
 
 #endif // _HCSR04_H

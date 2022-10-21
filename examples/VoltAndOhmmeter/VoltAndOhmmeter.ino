@@ -1,7 +1,7 @@
 /*
  *  VoltAndOhmmeter.cpp
  *
- *  Realizes an volt and ohmmeter with 6mV and 2 Ohm resolution at the lower end.
+ *  Realizes an volt and ohmmeter with 6mV and 2 ohm resolution at the lower end.
  *  First voltage is measured.
  *  If voltage is zero, then resistance to ground is measured using 5 volt (VCC) and 10 kOhm or 100 kOhm supply.
  *

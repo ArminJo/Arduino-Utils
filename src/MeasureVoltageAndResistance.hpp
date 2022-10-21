@@ -1,7 +1,7 @@
 /*
  *  MeasureVoltageAndResistance.hpp
  *
- *  Measures voltage and resistance with 1 mV and 2 Ohm resolution at the lower end.
+ *  Measures voltage and resistance with 1 mV and 2 ohm resolution at the lower end.
  *  First voltage is measured. If voltage is zero, then resistance to ground is measured using 5 volt (VCC) and 10 kOhm or 100 kOhm supply.
  *
  *  Copyright (C) 2021  Armin Joachimsmeyer
@@ -79,7 +79,7 @@
 #define RESISTOR_3_PIN                  A3
 
 #if !defined(ADC_INTERNAL_REFERENCE_MILLIVOLT)
-#define ADC_INTERNAL_REFERENCE_MILLIVOLT    1100L   // can be adjusted by measuring the voltage at the AREF pin
+#define ADC_INTERNAL_REFERENCE_MILLIVOLT    1100L // Change to value measured at the AREF pin. If value > real AREF voltage, measured values are > real values
 #endif
 
 // Fixed attenuator for voltage measurement
@@ -186,7 +186,7 @@ bool measureResistance(uint16_t aVCCVoltageMillivolt, ResistanceMeasurementResul
     if (tInputVoltage > REFERENCE_SWITCHING_VOLTAGE_THRESHOLD_MILLIVOLT) {
         if (tReadingAtVCC > tInputReading) {
             tRxOhm = (RESISTOR_1_TO_VCC_KOHM * 1000L * tInputReading) / (tReadingAtVCC - tInputReading);
-            // Here we have a resolution of 160 to 350 Ohm at 1 MOhm
+            // Here we have a resolution of 160 to 350 ohm at 1 MOhm
             // Clip at 10 MOhm
             if (tRxOhm > 9999999) {
                 tRxOhm = 9999999;
@@ -201,7 +201,7 @@ bool measureResistance(uint16_t aVCCVoltageMillivolt, ResistanceMeasurementResul
         /*
          * Switch to 1.1 volt reference increasing the resolution by around 4
          * This happens at around 28 kOhm (at 4.7 volt) depending on the current value of VCC
-         * Here we have a resolution of 24 to 37 Ohm
+         * Here we have a resolution of 24 to 37 ohm
          */
         tInputReading = waitAndReadADCChannelWithReference(OHM_CHANNEL, INTERNAL);
 
@@ -212,8 +212,8 @@ bool measureResistance(uint16_t aVCCVoltageMillivolt, ResistanceMeasurementResul
 
         /*
          * Formula is: (for 5 V and 1050 mV, in order to get a constant value)
-         * Rx = Rvcc * 1.050 V / 3.95 V = 2416 Ohm
-         * Here we have a resolution of 2 to 6 Ohm
+         * Rx = Rvcc * 1.050 V / 3.95 V = 2416 ohm
+         * Here we have a resolution of 2 to 6 ohm
          */
         const uint16_t tResistanceForThresholdVoltage = (RESISTOR_1_TO_VCC_KOHM * RESISTOR_2_TO_VCC_KOHM
                 * REFERENCE_SWITCHING_VOLTAGE_THRESHOLD_MILLIVOLT * 1000)
@@ -221,7 +221,7 @@ bool measureResistance(uint16_t aVCCVoltageMillivolt, ResistanceMeasurementResul
         if (tRxOhm < tResistanceForThresholdVoltage) {
 #if defined(DEBUG)
     Serial.print(tResistanceForThresholdVoltage);
-    Serial.print(F(" Ohm "));
+    Serial.print(F(" ohm "));
 #endif
 //        tResistanceRange = 2;
             /*

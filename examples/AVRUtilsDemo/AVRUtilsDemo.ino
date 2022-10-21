@@ -31,8 +31,8 @@
 //  USB+ ADC2 (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1 - (Digispark) LED
 //                 GND  4|    |5  PB0 (D0) OC0A/AIN0
 //                       +----+
-//  USB+ and USB- are each connected to a 3.3 volt Zener to GND and with a 68 Ohm series resistor to the ATtiny pin.
-//  On boards with a micro USB connector, the series resistor is 22 Ohm instead of 68 Ohm.
+//  USB+ and USB- are each connected to a 3.3 volt Zener to GND and with a 68 ohm series resistor to the ATtiny pin.
+//  On boards with a micro USB connector, the series resistor is 22 ohm instead of 68 ohm.
 //  USB- has a 1.5k pullup resistor to indicate a low-speed device.
 //  USB+ and USB- are each terminated on the host side with 15k to 25k pull-down resistors.
 #include <Arduino.h>

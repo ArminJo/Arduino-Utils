@@ -1,18 +1,17 @@
 /*
- *  HCSR04Demo
- *  .cpp
+ *  HCSR04Demo.cpp
  *
  *  Gets the USDistance and give tone feedback. Test 2 and 1 pin mode of HY-SRF05 and (modified) HC-SR04.
  *
  *  You can modify the HC-SR04 modules to 1 Pin mode by:
  *  Old module with 3 16 pin chips: Connect Trigger and Echo direct or use a resistor < 4.7 kOhm.
  *        If you remove both 10 kOhm pullup resistors you can use a connecting resistor < 47 kOhm, but I suggest to use 10 kOhm which is more reliable.
- *  Old module with 3 16 pin chips but with no pullup resistors near the connector row: Connect Trigger and Echo with a resistor > 200 Ohm. Use 10 kOhm.
- *  New module with 1 16 pin and 2 8 pin chips: Connect Trigger and Echo by a resistor > 200 Ohm and < 22 kOhm.
+ *  Old module with 3 16 pin chips but with no pullup resistors near the connector row: Connect Trigger and Echo with a resistor > 200 ohm. Use 10 kOhm.
+ *  New module with 1 16 pin and 2 8 pin chips: Connect Trigger and Echo by a resistor > 200 ohm and < 22 kOhm.
  *  All modules: Connect Trigger and Echo by a resistor of 4.7 kOhm.
  *  Some old HY-SRF05 modules of mine cannot be converted, since the output signal going low triggers the next measurement.
  *
- *  Copyright (C) 2020  Armin Joachimsmeyer
+ *  Copyright (C) 2020-2022  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -34,18 +33,20 @@
 
 #include <Arduino.h>
 
-#include "HCSR04.h"
+#define TRIGGER_OUT_PIN     4
+#define ECHO_IN_PIN         5
+#define SPEAKER_PIN        11
 
+#include "HCSR04.hpp"
+
+#if !defined(STR_HELPER)
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
+#endif
 
 #define VERSION_EXAMPLE "1.0"
 
 #define USE_1_PIN_MODE_DETECTION_PIN 6 // connect this to ground to enable 1 pin mode
-
-const uint8_t TRIGGER_OUT_PIN = 4;
-const uint8_t ECHO_IN_PIN = 5;
-const uint8_t SPEAKER_PIN = 11;
 
 void setup() {
     // initialize the digital pin as an output.
@@ -75,25 +76,25 @@ void setup() {
 }
 
 void loop() {
-    int tCentimeter = getUSDistanceAsCentimeterWithCentimeterTimeout(300);
-    // print distance
-    if (tCentimeter >= 300) {
-        Serial.println("timeout");
-        noTone(SPEAKER_PIN);
-    } else {
-        Serial.print("cm=");
-        Serial.println(tCentimeter);
-        tone(SPEAKER_PIN, 500 + tCentimeter * 10);
+    if (getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged(300, 100, &Serial)) {
+        if (sUSDistanceCentimeter == DISTANCE_TIMEOUT_RESULT) {
+            noTone(SPEAKER_PIN);
+        } else if (sUSDistanceCentimeter > 0) {
+            tone(SPEAKER_PIN, 500 + sUSDistanceCentimeter * 10);
+        }
     }
-    delay(200);
 
     /*
-     * Switch between modes. Only for testing, it makes no sense in regular operation.
+     * Switch between modes. Only for testing, it makes no sense in regular operation with a fixed HCSR04.
      */
     if (digitalRead(USE_1_PIN_MODE_DETECTION_PIN)) {
-        sHCSR04Mode = HCSR04_MODE_USE_2_PINS;
-        pinMode(TRIGGER_OUT_PIN, OUTPUT);
-    } else {
-        sHCSR04Mode = HCSR04_MODE_USE_1_PIN;
+        if (sHCSR04Mode != HCSR04_MODE_USE_2_PINS) {
+            setHCSR04OnePinMode(false);
+            pinMode(TRIGGER_OUT_PIN, OUTPUT);
+            Serial.print(F("Pin " STR(USE_1_PIN_MODE_DETECTION_PIN) " changed to high -> use 2 pin mode"));
+        }
+    } else if (sHCSR04Mode != HCSR04_MODE_USE_1_PIN) {
+        Serial.print(F("Pin " STR(USE_1_PIN_MODE_DETECTION_PIN) " changed to low -> use 1 pin mode"));
+        setHCSR04OnePinMode(true);
     }
 }

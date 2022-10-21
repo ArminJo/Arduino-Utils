@@ -48,6 +48,8 @@ ADC_PRESCALE	LITERAL1
 SHIFT_VALUE_FOR_REFERENCE	LITERAL1
 ADC_TEMPERATURE_CHANNEL_MUX	LITERAL1
 
+# From HexDump.cpp
+printMemoryHexDump	LITERAL1
 
 #######################################
 # Constants (LITERAL1)

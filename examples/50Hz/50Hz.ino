@@ -1,6 +1,6 @@
 /*
  *  50Hz.cpp
- *  Output 50 Hz at Pin 2/3
+ *  Example only for ATtinies: Output 50 Hz at Pin 2/3
  *
  *  Copyright (C) 2015  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com

@@ -42,7 +42,7 @@ void printBytePaddedHex(uint8_t aHexValueToPrint) {
     Serial.print(aHexValueToPrint, HEX);
 }
 
-void printWordPaddedHex(uint16_t aHexValueToPrint) {
+void printWordPaddedHex(uintptr_t aHexValueToPrint) {
     Serial.print(F("0x"));
     if (aHexValueToPrint < 0x1000) {
         Serial.print('0');
@@ -57,9 +57,20 @@ void printWordPaddedHex(uint16_t aHexValueToPrint) {
 
 }
 
-void printMemoryHexDump(uint8_t *aMemory, size_t aSizeOfMemoryToPrint) {
-    for (uint16_t tIndex = 0; tIndex < aSizeOfMemoryToPrint; tIndex += BYTES_PER_LINE) {
+/**
+ * Prints lines of
+ * 0x0000:  0xF1 0x81 0x82 0x00 0x08 0x02 0x00 0x27 0xFF 0xFF 0x0E 0xB3 0x81 0xFC 0x9B 0x47  ... .. '  .....G
+ * Always print complete lines!
+ * @param aSizeOfMemoryToPrint      Number of lines to print are are: (aSizeOfMemoryToPrint/BYTES_PER_LINE + 1)
+ * @param aPrintAbsoluteAddress     If true, do not start first line with address 0x0000 but with real memory address
+ */
+void printMemoryHexDump(uint8_t *aMemory, size_t aSizeOfMemoryToPrint, bool aPrintAbsoluteAddress) {
+    for (uintptr_t tIndex = 0; tIndex < aSizeOfMemoryToPrint; tIndex += BYTES_PER_LINE) {
+        if(aPrintAbsoluteAddress) {
+            printWordPaddedHex((uintptr_t)aMemory + tIndex);
+        } else {
         printWordPaddedHex(tIndex);
+        }
         Serial.print(F(": "));
         for (uint_fast8_t i = 0; i < BYTES_PER_LINE; i++) {
             printBytePaddedHex(aMemory[tIndex + i]);

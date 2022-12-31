@@ -49,7 +49,15 @@
 #define PRINT_BAND_PASS_1_3 0x200
 #define PRINT_BAND_PASS_3_4 0x400
 
-#define PRINT_ALL_FILTERS           0x77FF
+#define PRINT_2EMA_2        0x040000
+#define PRINT_2EMA_3        0x080000
+#define PRINT_2EMA_4        0x100000
+#define PRINT_2EMA_5        0x200000
+#define PRINT_3EMA_3        0x8000000
+
+#define PRINT_ALL_FILTERS           0xDC77FF
+#define PRINT_ALL_3DB_FILTERS       0x77FF
+#define PRINT_SIGNIFICANT_FILTERS   0x818773F
 #define PRINT_ALL_SIMPLE_FILTERS    0x073F
 #define PRINT_LOW_PASS_HI_RES       0x7000
 #define PRINT_LOW_PASS_1_TO_8       0x403F // all 16 bit except 8 which is 32 bit
@@ -71,8 +79,8 @@ extern int32_t sLowpass8_int32;
 
 extern float sLowpass5_float;
 
-void printFiltersCaption(uint16_t aPrintMask = PRINT_ALL_FILTERS);
-void printFiltersResults(uint16_t aPrintMask = PRINT_ALL_FILTERS);
+void printFiltersCaption(uint32_t aPrintMask = PRINT_ALL_FILTERS);
+void printFiltersResults(uint32_t aPrintMask = PRINT_ALL_FILTERS);
 void doFiltersStep(int16_t aInputValue);
 
 #endif // _SIMPLE_EMA_FILTERS_H

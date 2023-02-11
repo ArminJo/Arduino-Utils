@@ -65,12 +65,13 @@ The **maximum output value for integer filters** is: InputValue - ((1 << (ShiftV
 
 All implemented filters are applied at once to the input test signal calling `doFiltersStep(int16_t aInput)` and the results can in turn easily be displayed in the Arduino Plotter.
 
-### Plotter outputs representing e.g. a 20 Hz square / sine wave at a sample rate of 1 ms (or 40 Hz at 0.5 ms and so on)
+### Plotter outputs representing e.g. a 40, 20, 10, 5 Hz square / sine wave at a sample rate of 1 ms (or 80, 40 ... Hz at 0.5 ms and so on)
 
 ![ArduinoPlotter output](pictures/LowPass_HighInput.png)
 Arduino Plotter output for a rectangle input signal with a amplitude of +/- 100. E.g. Lowpass3 is the one with alpha 1/8 implemented by `>> 3` and the cutoff frequency of 21 Hz.
 <br/><br/>
 Note the following facts:
+- Highpass is always Input - Lowpass.
 - The Bandpass1_3 has an overshoot.
 - The 2 Lowpass3 and the 2 Lowpass5 lines are overlapping each other for this (high) amplitude.
 - The output of DoubleLowpass3 and 4 is more and more resembling a delayed sine.
@@ -180,6 +181,7 @@ Unifies millis() timer handling for Digispark, AttinyCore and Arduino cores.
 
 # ATtinyUtils.cpp
 - `toneWithTimer1PWM()`.
+- `noToneWithTimer1PWM()`.
 - `isBODSFlagExistent()` -> checking for ATtiny85 revision C.
 - fuse reading function.
 - `changeDigisparkClock()` to use Digispark boards with no Digispark core like e.g. ATTinyCore by [Spence Konde](https://github.com/SpenceKonde/ATTinyCore).

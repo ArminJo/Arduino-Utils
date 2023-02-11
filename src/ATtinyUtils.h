@@ -13,8 +13,8 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
@@ -30,6 +30,9 @@
 // USB-   PCINT4/XTAL2/CLKO/ OC1B/ADC2 (4) PB4  3|    |6  PB1 (1) MISO/DO/AIN1/OC0B/ OC1A/PCINT1 - (Digispark) LED
 //                                         GND  4|    |5  PB0 (0) MOSI/DI/AIN0/OC0A/!OC1A/SDA/AREF/PCINT0
 //                                               +----+
+//
+// On Digispark boards, PB5/USB- and PB3/USB+ are clamped by a 68 (USB A version) or 22 ohm (micro USB version) series resistor connected to a 3.7 V Zener to ground.
+// PB3/USB+ has a 1.0k (USB A version) or 1.5k (micro USB version) pullup to VCCC.
 
 // ATMEL ATTINY167
 // Pin numbers are for Digispark core
@@ -52,9 +55,10 @@
 #ifndef _ATTINY_UTILS_H
 #define _ATTINY_UTILS_H
 
+#include <Arduino.h>
+
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 
-#include <Arduino.h>
 #include <avr/io.h>
 
 #if defined(ARDUINO_AVR_DIGISPARK)
@@ -106,6 +110,7 @@ inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
 }
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
 void toneWithTimer1PWM(uint16_t aFrequency, bool aUseOutputB = false);
+void noToneWithTimer1PWM();
 #endif
 
 uint8_t getBODLevelFuses();

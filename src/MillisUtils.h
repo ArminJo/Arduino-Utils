@@ -53,10 +53,13 @@ void delayAndCallFunctionEveryMillis(unsigned int aDelayMillis, void (*aDelayCal
 void disableMillisInterrupt();
 void addToMillis(uint16_t aMillisToAdd);
 void enableMillisInterrupt(uint16_t aMillisToAddForCompensation = 0);
+
+void speedTestWith1kCalls(Print *aSerial, void (*aFunctionUnderTest)(void));
 #endif //  defined(__AVR__)
 
 void delayMilliseconds(unsigned int aMillis);
 bool areMillisGone(unsigned int aMillis);
 bool areMillisGone(unsigned int aMillis, unsigned long * aLastMillisPtr);
+
 
 #endif // _MILLIS_UTILS_H

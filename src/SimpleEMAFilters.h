@@ -13,8 +13,8 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
@@ -32,38 +32,47 @@
 // The change log is at the bottom of the file
 
 // Definitions for aPrintMask
-#define PRINT_INPUT         0x01
-#define PRINT_EMA_1         0x02
-#define PRINT_EMA_2         0x04
-#define PRINT_EMA_3         0x08
-#define PRINT_EMA_4         0x10
-#define PRINT_EMA_5         0x20
-#define PRINT_EMA_5_FLOAT   0x40
-#define PRINT_EMA_8_FLOAT   0x80
+#define PRINT_EMA_1         0x01
+#define PRINT_EMA_2         0x02
+#define PRINT_EMA_3         0x04
+#define PRINT_EMA_4         0x08
+#define PRINT_EMA_5         0x10
+#define PRINT_EMA_5_FLOAT   0x20
+#define PRINT_EMA_8_FLOAT   0x40
 
-#define PRINT_EMA_3_32      0x1000
-#define PRINT_EMA_5_32      0x2000
-#define PRINT_EMA_8_32      0x4000
+#define PRINT_EMA_3_32      0x100
+#define PRINT_EMA_5_32      0x200
+#define PRINT_EMA_8_32      0x400
 
-#define PRINT_HIGH_PASS     0x100
-#define PRINT_BAND_PASS_1_3 0x200
-#define PRINT_BAND_PASS_3_4 0x400
+#define PRINT_HIGH_PASS_1   0x1000
+#define PRINT_HIGH_PASS_2   0x2000
+#define PRINT_BAND_PASS_1_3 0x4000
+#define PRINT_BAND_PASS_3_4 0x8000
 
-#define PRINT_2EMA_2        0x040000
-#define PRINT_2EMA_3        0x080000
-#define PRINT_2EMA_4        0x100000
-#define PRINT_2EMA_5        0x200000
-#define PRINT_3EMA_3        0x8000000
+#define PRINT_2EMA_3        0x010000
+#define PRINT_2EMA_4        0x020000
+#define PRINT_3EMA_3        0x040000
 
+#define PRINT_BQ_LP         0x100000
+#define PRINT_BQ_HP         0x200000
+#define PRINT_BQ_BP         0x400000
+
+#define PRINT_ALL_LOW_PASS_16       0x1F
+#define PRINT_ALL_HIGH_PASS_16      (PRINT_HIGH_PASS_1 | PRINT_HIGH_PASS_2)
+#define PRINT_ALL_BAND_PASS_16      (PRINT_BAND_PASS_1_3 | PRINT_BAND_PASS_3_4)
+#define PRINT_LOW_PASS_FLOAT        (PRINT_EMA_5_FLOAT | PRINT_EMA_8_FLOAT)
+#define PRINT_LOW_PASS_32           (PRINT_EMA_3_32 | PRINT_EMA_5_32 | PRINT_EMA_8_32)
+#define PRINT_MULTIPLE_LOW_PASS     (PRINT_2EMA_3 | PRINT_2EMA_4 | PRINT_3EMA_3)
+#define PRINT_BI_QUAD               (PRINT_BQ_LP | PRINT_BQ_HP | PRINT_BQ_BP)
+
+#define PRINT_ALL_INTEGER_FILTERS   (PRINT_ALL_LOW_PASS_16 | PRINT_LOW_PASS_32)
+#define PRINT_ALL_3DB_FILTERS       (PRINT_ALL_LOW_PASS_16 | PRINT_LOW_PASS_FLOAT | PRINT_LOW_PASS_32)
+#define PRINT_SIGNIFICANT_FILTERS   (PRINT_ALL_INTEGER_FILTERS | PRINT_ALL_HIGH_PASS_16 | PRINT_ALL_BAND_PASS_16 | PRINT_MULTIPLE_LOW_PASS | PRINT_BI_QUAD)
 #define PRINT_ALL_FILTERS           0xDC77FF
-#define PRINT_ALL_3DB_FILTERS       0x77FF
-#define PRINT_SIGNIFICANT_FILTERS   0x818773F
-#define PRINT_ALL_SIMPLE_FILTERS    0x073F
-#define PRINT_LOW_PASS_HI_RES       0x7000
-#define PRINT_LOW_PASS_1_TO_8       0x403F // all 16 bit except 8 which is 32 bit
-#define PRINT_LOW_PASS_1_3_5_8      (PRINT_INPUT | PRINT_EMA_1 | PRINT_EMA_3_32 | PRINT_EMA_5_32 | PRINT_EMA_8_32)
-#define PRINT_LOW_PASS_5            (PRINT_INPUT | PRINT_EMA_5 | PRINT_EMA_5_32 | PRINT_EMA_FLOAT)
-#define PRINT_LOW_PASS_16_32        (PRINT_INPUT | PRINT_EMA_3 | PRINT_EMA_3_32 | PRINT_EMA_5 | PRINT_EMA_5_32 | PRINT_EMA_5_FLOAT | PRINT_EMA_8_32| PRINT_EMA_8_FLOAT)
+#define PRINT_LOW_PASS_1_TO_8       0x043F // all 16 bit except 8 which is 32 bit
+#define PRINT_LOW_PASS_1_3_5_8      (PRINT_EMA_1 | PRINT_EMA_3_32 | PRINT_EMA_5_32 | PRINT_EMA_8_32)
+#define PRINT_LOW_PASS_5            (PRINT_EMA_5 | PRINT_EMA_5_32 | PRINT_EMA_FLOAT)
+#define PRINT_LOW_PASS_16_32        (PRINT_EMA_3 | PRINT_EMA_3_32 | PRINT_EMA_5 | PRINT_EMA_5_32 | PRINT_EMA_5_FLOAT | PRINT_EMA_8_32| PRINT_EMA_8_FLOAT)
 
 extern int16_t sInputValueForPrint;
 

@@ -36,8 +36,8 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
@@ -68,7 +68,6 @@ int16_t sInputValueForPrint;
 
 int16_t sLowpass1;
 int16_t sLowpass2;
-int16_t sDoubleLowpass2;
 int16_t sLowpass3;
 int16_t sDoubleLowpass3;
 int16_t sTripleLowpass3;
@@ -85,8 +84,121 @@ float sLowpass5_float;
 float sLowpass8_float;
 
 /*
- * Convenience functions
+ * Biquad
  */
+int32_t sBiQuadLowpass_int16 = 0;
+int32_t sBiQuadBandpass_int16 = 0;
+int32_t sBiQuadHighpass_int16; // must not be static, is always computed new from Lowpass and Bandpass
+
+int32_t sBiQuadLowpass_int32_shift8 = 0;
+int32_t sBiQuadBandpass_int32_shift8 = 0;
+int32_t sBiQuadHighpass_int32_shift8; // must not be static, is always computed new from Lowpass and Bandpass
+int16_t sDampingFactor_shift8 = 256;
+int16_t sAlpha_shift8 = 4; // 256 = 1, 128 = 1/2, 64 = 1/4, 16 = 1/16, 4 = 1/32
+
+/************************
+ * Convenience functions
+ ************************/
+/*
+ * Generic function with parameter aDivisorExponent or aDivisor
+ */
+void doLowpassGeneric_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue, uint8_t aDivisorExponent) {
+    *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << (aDivisorExponent - 1))) >> aDivisorExponent;
+}
+void doLowpassGeneric_int32(int32_t *aLowpassAccumulator_int32, int16_t aInputValue, uint8_t aDivisorExponent) {
+    *aLowpassAccumulator_int32 += ((((int32_t) aInputValue << 8) - *aLowpassAccumulator_int32) + (1 << (aDivisorExponent - 1)))
+            >> aDivisorExponent;
+}
+
+/******************
+ * int16 functions
+ ******************/
+void doLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue, uint8_t aShiftValue) {
+    *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << (aShiftValue - 1))) >> aShiftValue;
+}
+
+/*
+ * Has 12 db per octave
+ */
+void doDoubleLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDoubleLowpassAccumulator_int16, int16_t aInputValue,
+        uint8_t aShiftValue) {
+    *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << (aShiftValue - 1))) >> aShiftValue;
+    *aDoubleLowpassAccumulator_int16 += ((*aLowpassAccumulator_int16 - *aDoubleLowpassAccumulator_int16) + (1 << (aShiftValue - 1)))
+            >> aShiftValue;
+}
+
+/*
+ * Has 18 db per octave
+ */
+void doTripleLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDoubleLowpassAccumulator_int16,
+        int16_t *aTripleLowpassAccumulator_int16, int16_t aInputValue, uint8_t aShiftValue) {
+    *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << (aShiftValue - 1))) >> aShiftValue;
+    *aDoubleLowpassAccumulator_int16 += ((*aLowpassAccumulator_int16 - *aDoubleLowpassAccumulator_int16) + (1 << (aShiftValue - 1)))
+            >> aShiftValue;
+    *aTripleLowpassAccumulator_int16 += ((*aDoubleLowpassAccumulator_int16 - *aTripleLowpassAccumulator_int16)
+            + (1 << (aShiftValue - 1))) >> aShiftValue;
+}
+
+/******************************************************
+ * int32 functions with (24,8) fixed point accumulator
+ ******************************************************/
+void doLowpass_int32_shift8(int32_t *aLowpassAccumulator_int32_shift8, int16_t aInputValue, uint8_t aShiftValue) {
+    *aLowpassAccumulator_int32_shift8 += ((((int32_t) aInputValue << 8) - *aLowpassAccumulator_int32_shift8)
+            + (1 << (aShiftValue - 1))) >> aShiftValue;
+}
+void doDoubleLowpass_int32_shift8(int32_t *aLowpassAccumulator_int32_shift8, int32_t *aDoubleLowpassAccumulator_int32_shift8,
+        int16_t aInputValue, uint8_t aShiftValue) {
+    *aLowpassAccumulator_int32_shift8 += ((((int32_t) aInputValue << 8) - *aLowpassAccumulator_int32_shift8)
+            + (1 << (aShiftValue - 1))) >> aShiftValue;
+    *aDoubleLowpassAccumulator_int32_shift8 += ((*aLowpassAccumulator_int32_shift8 - *aDoubleLowpassAccumulator_int32_shift8)
+            + (1 << (aShiftValue - 1))) >> aShiftValue;
+}
+/*
+ * Function to get the value for the int32_shift8 functions / accumulators
+ */
+int16_t getLowpass_int32_shift8(int32_t *aLowpassAccumulator_int32_shift8) {
+    return *aLowpassAccumulator_int32_shift8 >> 8;
+}
+
+/********************************************************************
+ * int32 functions with (16,16) fixed point accumulator
+ * This has better resolution but can overflow at input values > 16k
+ ********************************************************************/
+void doLowpass_int32_shift16(int32_t *aLowpassAccumulator_int32_shift16, int16_t aInputValue, uint8_t aDivisorExponent) {
+    *aLowpassAccumulator_int32_shift16 += ((((int32_t) aInputValue << 16) - *aLowpassAccumulator_int32_shift16)
+            + (1 << (aDivisorExponent - 1))) >> aDivisorExponent;
+}
+void doDoubleLowpass_int32_shift16(int32_t *aLowpassAccumulator_int32_shift16, int32_t *aDoubleLowpassAccumulator_int32_shift16,
+        int16_t aInputValue, uint8_t aDivisorExponent) {
+    *aLowpassAccumulator_int32_shift16 += ((((int32_t) aInputValue << 16) - *aLowpassAccumulator_int32_shift16)
+            + (1 << (aDivisorExponent - 1))) >> aDivisorExponent;
+    *aDoubleLowpassAccumulator_int32_shift16 += ((*aLowpassAccumulator_int32_shift16 - *aDoubleLowpassAccumulator_int32_shift16)
+            + (1 << (aDivisorExponent - 1))) >> aDivisorExponent;
+}
+
+/*
+ * Function to get the value for the int32_shift16 functions / accumulators
+ * Or declare accumulator as LongUnion and call filters with LongUnion.Long and get result with LongUnion.Word.HighWord
+ */
+int16_t getLowpass_int32_shift16(int32_t *aLowpassAccumulator_int32) {
+    return *aLowpassAccumulator_int32 >> 16;
+}
+
+/******************
+ * float functions
+ ******************/
+void doLowpass_float(float *aLowpassAccumulator_float, int16_t aInputValue, float aAlpha) {
+    *aLowpassAccumulator_float += (aInputValue - *aLowpassAccumulator_float) * aAlpha;
+}
+void doDoubleLowpass_float(float *aLowpassAccumulator_float, float *aDoubleLowpassAccumulator_float, int16_t aInputValue,
+        float aAlpha) {
+    *aLowpassAccumulator_float += (aInputValue - *aLowpassAccumulator_float) * aAlpha;
+    *aDoubleLowpassAccumulator_float += (*aLowpassAccumulator_float - *aDoubleLowpassAccumulator_float) * aAlpha;
+}
+
+/***********************************
+ * Fast functions with fixed shifts
+ ***********************************/
 void doLowpass1_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue) {
     *aLowpassAccumulator_int16 += (aInputValue - *aLowpassAccumulator_int16) >> 1; // alpha = 0.5, cutoff frequency 160 Hz @1kHz sampling rate
 }
@@ -117,7 +229,8 @@ void doDoubleLowpass3_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDouble
 /*
  * Has 18 db per octave
  */
-void doTripleLowpass3_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDoubleLowpassAccumulator_int16, int16_t *aTripleLowpassAccumulator_int16, int16_t aInputValue) {
+void doTripleLowpass3_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDoubleLowpassAccumulator_int16,
+        int16_t *aTripleLowpassAccumulator_int16, int16_t aInputValue) {
     *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << 2)) >> 3;
     *aDoubleLowpassAccumulator_int16 += ((*aLowpassAccumulator_int16 - *aDoubleLowpassAccumulator_int16) + (1 << 2)) >> 3;
     *aTripleLowpassAccumulator_int16 += ((*aDoubleLowpassAccumulator_int16 - *aTripleLowpassAccumulator_int16) + (1 << 2)) >> 3;
@@ -164,36 +277,6 @@ void doLowpass8_float(float *aLowpassAccumulator_float, int16_t aInputValue) {
 }
 
 /*
- * Generic function with parameter aDivisorExponent or aDivisor
- */
-void doLowpassGeneric_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue, uint8_t aDivisorExponent) {
-    *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << (aDivisorExponent - 1))) >> aDivisorExponent;
-}
-void doLowpassGeneric_int32(int32_t *aLowpassAccumulator_int32, int16_t aInputValue, uint8_t aDivisorExponent) {
-    *aLowpassAccumulator_int32 += ((((int32_t) aInputValue << 8) - *aLowpassAccumulator_int32) + (1 << (aDivisorExponent - 1)))
-            >> aDivisorExponent;
-}
-// This has better resolution but can overflow at input values > 16k
-void doLowpassGeneric_int32_shift8(int32_t *aLowpassAccumulator_int32, int16_t aInputValue, uint8_t aDivisorExponent) {
-    *aLowpassAccumulator_int32 += ((((int32_t) aInputValue << 16) - *aLowpassAccumulator_int32) + (1 << (aDivisorExponent - 1)))
-            >> aDivisorExponent;
-}
-void doLowpassGeneric_float(float *aLowpassAccumulator_float, int16_t aInputValue, float aDivisor) {
-    *aLowpassAccumulator_float += (aInputValue - *aLowpassAccumulator_float) / aDivisor; // 24 to 34 us
-}
-
-/*
- * Functions to get the values for the int32 functions / accumulators
- */
-int16_t getLowpass_int32(int32_t *aLowpassAccumulator_int32) {
-    return *aLowpassAccumulator_int32 >> 8;
-}
-
-int16_t getLowpass_int32_shift8(int32_t *aLowpassAccumulator_int32) {
-    return *aLowpassAccumulator_int32 >> 16;
-}
-
-/*
  * The main test function
  */
 void doFiltersStep(int16_t aInputValue) {
@@ -209,11 +292,17 @@ void doFiltersStep(int16_t aInputValue) {
 
 // "+ (1 << 2)" to avoid to much rounding errors and it costs only 1 clock extra
     sLowpass2 += ((aInputValue - sLowpass2) + (1 << 1)) >> 2; // 1.1 us, alpha = 0.25, cutoff frequency 53 Hz @1kHz
-    sDoubleLowpass2 += ((sLowpass2 - sDoubleLowpass2) + (1 << 1)) >> 2;
 
     sLowpass3 += ((aInputValue - sLowpass3) + (1 << 2)) >> 3; // 1.8 us, alpha = 0.125, cutoff frequency 22.7 Hz @1kHz
     sDoubleLowpass3 += ((sLowpass3 - sDoubleLowpass3) + (1 << 2)) >> 3;
     sTripleLowpass3 += ((sDoubleLowpass3 - sTripleLowpass3) + (1 << 2)) >> 3;
+
+    /*
+     * Biquad with damping factor = 0
+     */
+    sBiQuadHighpass_int16 = aInputValue - sBiQuadBandpass_int16 - (sBiQuadBandpass_int16 * 0); // no damping
+    sBiQuadBandpass_int16 += (sBiQuadHighpass_int16 + (1 << 2)) >> 3; // like sLowpass3
+    sBiQuadLowpass_int16 += (sBiQuadBandpass_int16 + (1 << 2)) >> 3; // like sDoubleLowpass3
 
     sLowpass4 += ((aInputValue - sLowpass4) + (1 << 3)) >> 4; // 2.2 us, alpha = 0.0625, cutoff frequency 10.6 Hz @1kHz
     sDoubleLowpass4 += ((sLowpass4 - sDoubleLowpass4) + (1 << 3)) >> 4;
@@ -250,20 +339,35 @@ void doFiltersStep(int16_t aInputValue) {
     timingPinHigh();
     sLowpass8_float += (aInputValue - sLowpass8_float) / 256.0; //
     timingPinLow();
+
+    /*
+     * State Variable Filter
+     */
+//    int16_t SVF_1_int16;
+//    int16_t SVF_2_int16;
+//    SVF_1_int16 = 0;
+    /*
+     * Biquad
+     */
+    sBiQuadHighpass_int16 = (aInputValue - sBiQuadBandpass_int16) - sBiQuadLowpass_int16; // no damping
+    sBiQuadBandpass_int16 = sBiQuadBandpass_int16 + ((sBiQuadHighpass_int16 + (1 << 4)) >> 5);
+    sBiQuadLowpass_int16 = sBiQuadLowpass_int16 + ((sBiQuadBandpass_int16 + (1 << 4)) >> 5);
+
+    sBiQuadHighpass_int32_shift8 = ((int32_t) aInputValue << 8)
+            - (((sBiQuadBandpass_int32_shift8 * sDampingFactor_shift8) + (1 << 7)) >> 8) - sBiQuadLowpass_int32_shift8;
+    sBiQuadBandpass_int32_shift8 = sBiQuadBandpass_int32_shift8
+            + (((sBiQuadHighpass_int32_shift8 * sAlpha_shift8) + (1 << 7)) >> 8);
+    sBiQuadLowpass_int32_shift8 = sBiQuadLowpass_int32_shift8 + (((sBiQuadBandpass_int32_shift8 * sAlpha_shift8) + (1 << 7)) >> 8);
 }
 
 void printFiltersCaption(uint32_t aPrintMask) {
-    if (aPrintMask & PRINT_INPUT) {
-        Serial.print(F("Input "));
-    }
+    Serial.print(F("Input "));
+
     if (aPrintMask & PRINT_EMA_1) {
         Serial.print(F("Lowpass1 "));
     }
     if (aPrintMask & PRINT_EMA_2) {
         Serial.print(F("Lowpass2 "));
-    }
-    if (aPrintMask & PRINT_2EMA_2) {
-        Serial.print(F("DoubleLowpass2 "));
     }
     if (aPrintMask & PRINT_EMA_3) {
         Serial.print(F("Lowpass3 "));
@@ -292,17 +396,17 @@ void printFiltersCaption(uint32_t aPrintMask) {
     if (aPrintMask & PRINT_EMA_5_FLOAT) {
         Serial.print(F("Lowpass5_float "));
     }
-    if (aPrintMask & PRINT_2EMA_5) {
-        Serial.print(F("DoubleLowpass5 "));
-    }
     if (aPrintMask & PRINT_EMA_8_32) {
         Serial.print(F("Lowpass8_int32 "));
     }
     if (aPrintMask & PRINT_EMA_8_FLOAT) {
         Serial.print(F("Lowpass8_float "));
     }
-    if (aPrintMask & PRINT_HIGH_PASS) {
+    if (aPrintMask & PRINT_HIGH_PASS_1) {
         Serial.print(F("Highpass1 "));
+    }
+    if (aPrintMask & PRINT_HIGH_PASS_2) {
+        Serial.print(F("Highpass2 "));
     }
     if (aPrintMask & PRINT_BAND_PASS_1_3) {
         Serial.print(F("Bandpass1_3 "));
@@ -310,24 +414,28 @@ void printFiltersCaption(uint32_t aPrintMask) {
     if (aPrintMask & PRINT_BAND_PASS_3_4) {
         Serial.print(F("Bandpass3_4 "));
     }
+    if (aPrintMask & PRINT_BQ_LP) {
+        Serial.print(F("BiQuadLowpass "));
+    }
+    if (aPrintMask & PRINT_BQ_HP) {
+        Serial.print(F("BiQuadHighpass "));
+    }
+    if (aPrintMask & PRINT_BQ_BP) {
+        Serial.print(F("BiQuadBandpass "));
+    }
     Serial.println();
 }
 
 void printFiltersResults(uint32_t aPrintMask) {
-    if (aPrintMask & PRINT_INPUT) {
-        Serial.print(sInputValueForPrint);
-        Serial.print(" ");
-    }
+    Serial.print(sInputValueForPrint);
+    Serial.print(" ");
+
     if (aPrintMask & PRINT_EMA_1) {
         Serial.print(sLowpass1);
         Serial.print(" ");
     }
     if (aPrintMask & PRINT_EMA_2) {
         Serial.print(sLowpass2);
-        Serial.print(" ");
-    }
-    if (aPrintMask & PRINT_2EMA_2) {
-        Serial.print(sDoubleLowpass2);
         Serial.print(" ");
     }
     if (aPrintMask & PRINT_EMA_3) {
@@ -366,10 +474,6 @@ void printFiltersResults(uint32_t aPrintMask) {
         Serial.print(sLowpass5_float);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_2EMA_5) {
-        Serial.print(sDoubleLowpass5);
-        Serial.print(" ");
-    }
     if (aPrintMask & PRINT_EMA_8_32) {
         Serial.print(sLowpass8_int32 >> 8);
         Serial.print(" ");
@@ -379,19 +483,37 @@ void printFiltersResults(uint32_t aPrintMask) {
         Serial.print(" ");
     }
 
-    if (aPrintMask & PRINT_HIGH_PASS) {
+    if (aPrintMask & PRINT_HIGH_PASS_1) {
         Serial.print(sInputValueForPrint - sLowpass1);
         Serial.print(" ");
     }
+    if (aPrintMask & PRINT_HIGH_PASS_2) {
+        Serial.print(sInputValueForPrint - sLowpass2);
+        Serial.print(" ");
+    }
+
     if (aPrintMask & PRINT_BAND_PASS_1_3) {
         Serial.print(sLowpass1 - sLowpass3);
         Serial.print(" ");
     }
-
     if (aPrintMask & PRINT_BAND_PASS_3_4) {
         Serial.print(sLowpass3 - sLowpass4);
         Serial.print(" ");
     }
+
+    if (aPrintMask & PRINT_BQ_LP) {
+        Serial.print(sBiQuadLowpass_int32_shift8 >> 8);
+        Serial.print(" ");
+    }
+    if (aPrintMask & PRINT_BQ_HP) {
+        Serial.print(sBiQuadHighpass_int32_shift8 >> 8);
+        Serial.print(" ");
+    }
+    if (aPrintMask & PRINT_BQ_BP) {
+        Serial.print(sBiQuadBandpass_int32_shift8 >> 8);
+        Serial.print(" ");
+    }
+
     Serial.println();
 }
 

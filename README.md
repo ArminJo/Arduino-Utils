@@ -1,12 +1,32 @@
-# [ArduinoUtils](https://github.com/ArminJo/Arduino-Utils) - My utility collection for Arduino
+<div align = center>
 
-### [Version 1.0.0](https://github.com/ArminJo/Arduino-Utils/archive/master.zip)
+# [ArduinoUtils](https://github.com/ArminJo/Arduino-Utils)
+My utility collection for Arduino
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/Arduino-Utils/latest)](https://github.com/ArminJo/Arduino-Utils/commits/master)
-[![Build Status](https://github.com/ArminJo/Arduino-Utils/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/Arduino-Utils/actions)
-![Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_Arduino-Utils)
+[![Badge License: GPLv3](https://img.shields.io/badge/License-GPLv3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
+ &nbsp; &nbsp;
+[![Badge Version](https://img.shields.io/github/v/release/ArminJo/Arduino-Utils?include_prereleases&color=yellow&logo=DocuSign&logoColor=white)](https://github.com/ArminJo/Arduino-Utils/releases/latest)
+ &nbsp; &nbsp;
+[![Badge Commits since latest](https://img.shields.io/github/commits-since/ArminJo/Arduino-Utils/latest?color=yellow)](https://github.com/ArminJo/Arduino-Utils/commits/master)
+ &nbsp; &nbsp;
+[![Badge Build Status](https://github.com/ArminJo/Arduino-Utils/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/Arduino-Utils/actions)
+ &nbsp; &nbsp;
+![Badge Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_Arduino-Utils)
+<br/>
+<br/>
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+
+Not yet available as Arduino library.
+
+[![Button Install](https://img.shields.io/badge/Install-brightgreen?logoColor=white&logo=GitBook)](https://www.ardu-badge.com/Arduino-Utils)
+ &nbsp; &nbsp;
+[![Button API](https://img.shields.io/badge/API-yellow?logoColor=white&logo=OpenStreetMap)](https://arminjo.github.io/Arduino-Utils/classArduino-Utils.html)
+ &nbsp; &nbsp;
+[![Button Changelog](https://img.shields.io/badge/Changelog-blue?logoColor=white&logo=AzureArtifacts)](https://github.com/ArminJo/Arduino-Utils#revision-history)
+
+</div>
+
+<br/>
 
 # Table of content
 * [SimpleEMAFilters.hpp](https://github.com/ArminJo/Arduino-Utils#simpleemafiltershpp)
@@ -125,6 +145,7 @@ Fast and flexible ADC conversions. **Intelligent handling of delays for referenc
 - Functions for easy **oversampling**.
 - Function for easy getting the maximum value of measurements.
 - Functions for getting **temperature and VCC voltage**.  For VCC, resolution is 20 millivolt!
+- Functions to check if voltage is too low for a given period, used especially for Li-ion batteries supply.
 
 # HCSR04
 - Blocking and **non-blocking** reading of HCSR04 US Sensors with timeouts and exact conversions.
@@ -221,6 +242,10 @@ If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easi
 # Revision History
 
 ### Version 1.1.0 - work in progress
+- SimpleEMAFilters: Added "State Variable" / Biquad and double and triple Lowpass filters.
+- ADCUtils: Renamed `*VoltageCheck*()` to `*VCCCheck*()`, `setADCMultiplexerAndReferenceForNextConversion()` to `setADCChannelAndReferenceForNextConversion()` and changed signature of `readUntil4ConsecutiveValuesAreEqual()`.
+- Improvements.
+- Documentation.
 
 ### Version 1.0.0
 - Added unions.

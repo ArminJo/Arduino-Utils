@@ -27,6 +27,8 @@
 #if defined(__AVR__) && !(defined(__AVR_ATtiny1616__)  || defined(__AVR_ATtiny3216__) || defined(__AVR_ATtiny3217__))
 #include "AVRUtils.h"
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
+#include <avr/wdt.h>
 #include <stdlib.h> // for __malloc_margin
 /*
  * The largest address just not allocated so far
@@ -202,14 +204,6 @@ bool isAddressBelowHeap(void *aAddressToCheck) {
 
 /********************************************
  * SLEEP AND WATCHDOG STUFF
- *
- * For sleep modes see sleep.h
- * SLEEP_MODE_IDLE
- * SLEEP_MODE_ADC
- * SLEEP_MODE_PWR_DOWN
- * SLEEP_MODE_PWR_SAVE
- * SLEEP_MODE_STANDBY
- * SLEEP_MODE_EXT_STANDBY
  ********************************************/
 volatile uint16_t sNumberOfSleeps = 0;
 
@@ -225,6 +219,15 @@ volatile uint16_t sNumberOfSleeps = 0;
 extern volatile unsigned long timer0_millis;
 #endif // MILLIS_UTILS_H_
 
+/*
+ * For sleep modes see sleep.h
+ * SLEEP_MODE_IDLE
+ * SLEEP_MODE_ADC
+ * SLEEP_MODE_PWR_DOWN
+ * SLEEP_MODE_PWR_SAVE
+ * SLEEP_MODE_STANDBY
+ * SLEEP_MODE_EXT_STANDBY
+*/
 // required only once
 void initSleep(uint8_t tSleepMode) {
     sleep_enable();
@@ -256,19 +259,24 @@ void initPeriodicSleepWithWatchdog(uint8_t tSleepMode, uint8_t aWatchdogPrescale
 
 /*
  * @param aWatchdogPrescaler (see wdt.h) can be one of WDTO_15MS, 30, 60, 120, 250, WDTO_500MS, WDTO_1S to WDTO_8S
- *                                                    0 (15 ms) to 3(120 ms), 4 (250 ms) up to 9 (8000 ms)
+ *                           0 (15 ms) to 3(120 ms), 4 (250 ms) up to 9 (8000 ms)
  */
 uint16_t computeSleepMillis(uint8_t aWatchdogPrescaler) {
     uint16_t tResultMillis = 8000;
     for (uint8_t i = 0; i < (9 - aWatchdogPrescaler); ++i) {
         tResultMillis = tResultMillis / 2;
     }
-    return tResultMillis + 65; // + 65 for the (default) startup time
+    return tResultMillis + DEFAULT_MILLIS_FOR_WAKEUP_AFTER_POWER_DOWN; // + for the (default) startup time. !!! But this depends from Clock Source and sleep mode !!!
 }
+
 /*
  * @param aWatchdogPrescaler (see wdt.h) can be one of WDTO_15MS, 30, 60, 120, 250, WDTO_500MS, WDTO_1S to WDTO_8S
+ *                           0 (15 ms) to 3(120 ms), 4 (250 ms) up to 9 (8000 ms)
+ *                           ! I have see + 30 % deviation from nominal WDT clock!
  * @param aAdjustMillis if true, adjust the Arduino internal millis counter the get quite correct millis()
  * results even after sleep, since the periodic 1 ms timer interrupt is disabled while sleeping.
+ * Interrupts are enabled before sleep!
+ * !!! Do not forget to call e.g. noTone() or  Serial.flush(); to wait for the last character to be sent, and/or disable interrupt sources before !!!
  */
 void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis) {
     MCUSR = 0; // Clear MCUSR to enable a correct interpretation of MCUSR after reset
@@ -284,7 +292,7 @@ void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis) {
 #define WDTCSR  WDTCR
 #endif
     WDTCSR |= _BV(WDIE) | _BV(WDIF); // Watchdog interrupt enable + reset interrupt flag -> requires ISR(WDT_vect)
-    sei();         // Enable interrupts
+    sei();         // Enable interrupts, to get the watchdog interrupt, which will wake us up
     sleep_cpu();   // The watchdog interrupt will wake us up from sleep
 
     // We wake up here :-)

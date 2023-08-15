@@ -55,14 +55,24 @@ union WordUnionForADCUtils {
 };
 
 /*
+ * Enable this to see information on each call.
+ * Since there should be no library which uses Serial, it should only be enabled for development purposes.
+ */
+#if defined(DEBUG)
+#define LOCAL_DEBUG
+#else
+//#define LOCAL_DEBUG // This enables debug output only for this file
+#endif
+
+/*
  * Persistent storage for VCC value
  */
 float sVCCVoltage;
 uint16_t sVCCVoltageMillivolt;
 
 // for isVCCTooLowMultipleTimes()
-long sLastVoltageCheckMillis;
-uint8_t sVoltageTooLowCounter = 0;
+long sLastVCCCheckMillis;
+uint8_t sVCCTooLowCounter = 0;
 
 /*
  * Conversion time is defined as 0.104 milliseconds by ADC_PRESCALE in ADCUtils.h.
@@ -128,7 +138,7 @@ uint16_t waitAndReadADCChannelWithReferenceAndRestoreADMUXAndReference(uint8_t a
 /*
  * To prepare reference and ADMUX for next measurement
  */
-void setADCMultiplexerAndReferenceForNextConversion(uint8_t aChannelNumber, uint8_t aReference) {
+void setADCChannelAndReferenceForNextConversion(uint8_t aChannelNumber, uint8_t aReference) {
     ADMUX = aChannelNumber | (aReference << SHIFT_VALUE_FOR_REFERENCE);
 }
 
@@ -155,7 +165,7 @@ uint8_t checkAndWaitForReferenceAndChannelToSwitch(uint8_t aChannelNumber, uint8
         /*
          * Switch reference from DEFAULT to INTERNAL
          */
-        delayMicroseconds(8000); // experimental value is >= 7600 us for Nano board and 6200 for UNO board
+        delayMicroseconds(8000); // experimental value is >= 7600 us for Nano board and 6200 for Uno board
     } else if ((tOldADMUX & 0x0F) != aChannelNumber) {
         if (aChannelNumber == ADC_1_1_VOLT_CHANNEL_MUX) {
             /*
@@ -308,23 +318,30 @@ uint16_t readADCChannelWithReferenceMaxMicros(uint8_t aChannelNumber, uint8_t aR
  * aMaxRetries = 255 -> try forever
  * @return (tMax + tMin) / 2
  */
-uint16_t readUntil4ConsecutiveValuesAreEqual(uint8_t aChannelNumber, uint8_t aDelay, uint8_t aAllowedDifference,
+uint16_t readUntil4ConsecutiveValuesAreEqual(uint8_t aChannelNumber, uint8_t aReference, uint8_t aDelay, uint8_t aAllowedDifference,
         uint8_t aMaxRetries) {
-    int tValues[4];
+    int tValues[4]; // last value is in tValues[3]
     int tMin;
     int tMax;
 
-    tValues[0] = readADCChannel(aChannelNumber);
+    /*
+     * Initialize first 4 values before checking
+     */
+    tValues[0] = readADCChannelWithReference(aChannelNumber, aReference);
     for (int i = 1; i < 4; ++i) {
-        delay(aDelay); // Only 3 delays!
-        tValues[i] = readADCChannel(aChannelNumber);
+        if (aDelay != 0) {
+            delay(aDelay); // Minimum is only 3 delays!
+        }
+        tValues[i] = readADCChannelWithReference(aChannelNumber, aReference);
     }
 
     do {
-        // find min and max
+        /*
+         * Get min and max of the last 4 values
+         */
         tMin = 1024;
         tMax = 0;
-        for (int i = 0; i < 4; ++i) {
+        for (uint_fast8_t i = 0; i < 4; ++i) {
             if (tValues[i] < tMin) {
                 tMin = tValues[i];
             }
@@ -338,21 +355,43 @@ uint16_t readUntil4ConsecutiveValuesAreEqual(uint8_t aChannelNumber, uint8_t aDe
         if ((tMax - tMin) <= aAllowedDifference) {
             break;
         } else {
+            /*
+             * Get next value
+             */
 //            Serial.print("Difference=");
 //            Serial.println(tMax - tMin);
-
-            // move values
+            // Move values to front
             for (int i = 0; i < 3; ++i) {
                 tValues[i] = tValues[i + 1];
             }
-            // and wait
-            delay(aDelay);
-            tValues[3] = readADCChannel(aChannelNumber);
+            // and wait before getting next value
+            if (aDelay != 0) {
+                delay(aDelay);
+            }
+            tValues[3] = readADCChannelWithReference(aChannelNumber, aReference);
         }
         if (aMaxRetries != 255) {
             aMaxRetries--;
         }
     } while (aMaxRetries > 0);
+
+#if defined(LOCAL_DEBUG)
+    if(aMaxRetries == 0) {
+        Serial.print(F("No 4 equal values for difference "));
+        Serial.print(aAllowedDifference);
+        Serial.print(F(" found "));
+        Serial.print(tValues[0]);
+        Serial.print(' ');
+        Serial.print(tValues[1]);
+        Serial.print(' ');
+        Serial.print(tValues[2]);
+        Serial.print(' ');
+        Serial.println(tValues[3]);
+    } else {
+        Serial.print(aMaxRetries);
+        Serial.println(F(" retries left"));
+    }
+#endif
 
     return (tMax + tMin) / 2;
 }
@@ -361,6 +400,10 @@ uint16_t readUntil4ConsecutiveValuesAreEqual(uint8_t aChannelNumber, uint8_t aDe
  * !!! Function without handling of switched reference and channel.!!!
  * Use it ONLY if you only call getVCCVoltageSimple() or getVCCVoltageMillivoltSimple() in your program.
  * !!! Resolution is only 20 millivolt !!!
+ * Raw reading of 1.1 V is 225 at 5 V.
+ * Raw reading of 1.1 V is 221 at 5.1 V.
+ * Raw reading of 1.1 V is 214 at 5.25 V (+5 %).
+ * Raw reading of 1.1 V is 204 at 5.5 V (+10 %).
  */
 float getVCCVoltageSimple(void) {
     // use AVCC with (optional) external capacitor at AREF pin as reference
@@ -384,7 +427,7 @@ uint16_t getVCCVoltageMillivoltSimple(void) {
  * Similar to getVCCVoltageMillivolt() * 1023 / 1100
  */
 uint16_t getVCCVoltageReadingFor1_1VoltReference(void) {
-    uint16_t tVCC = waitAndReadADCChannelWithReference(ADC_1_1_VOLT_CHANNEL_MUX, DEFAULT); // 225 for 1.1 V at 5 V VCC
+    uint16_t tVCC = waitAndReadADCChannelWithReference(ADC_1_1_VOLT_CHANNEL_MUX, DEFAULT);
     /*
      * Do not switch back ADMUX to enable checkAndWaitForReferenceAndChannelToSwitch() to work correctly for the next measurement
      */
@@ -402,6 +445,10 @@ float getVCCVoltage(void) {
  * Read value of 1.1 volt internal channel using VCC (DEFAULT) as reference.
  * Handles reference and channel switching by introducing the appropriate delays.
  * !!! Resolution is only 20 millivolt !!!
+ * Raw reading of 1.1 V is 225 at 5 V.
+ * Raw reading of 1.1 V is 221 at 5.1 V.
+ * Raw reading of 1.1 V is 214 at 5.25 V (+5 %).
+ * Raw reading of 1.1 V is 204 at 5.5 V (+10 %).
  */
 uint16_t getVCCVoltageMillivolt(void) {
     uint16_t tVCC = waitAndReadADCChannelWithReference(ADC_1_1_VOLT_CHANNEL_MUX, DEFAULT);
@@ -502,6 +549,12 @@ uint16_t getVoltageMillivoltWith_1_1VoltReference(uint8_t aADCChannelForVoltageM
 #if !defined(VCC_EMERGENCY_STOP_MILLIVOLT)
 #define VCC_EMERGENCY_STOP_MILLIVOLT    3000 // Many Li-ions are specified down to 3.0 volt
 #endif
+#if !defined(VCC_TOO_HIGH_STOP_MILLIVOLT)
+#define VCC_TOO_HIGH_STOP_MILLIVOLT    5250 // + 5 % operation voltage
+#endif
+#if !defined(VCC_TOO_HIGH_EMERGENCY_STOP_MILLIVOLT)
+#define VCC_TOO_HIGH_EMERGENCY_STOP_MILLIVOLT    5500 // +10 %. Max recommended operation voltage
+#endif
 #if !defined(VCC_CHECK_PERIOD_MILLIS)
 #define VCC_CHECK_PERIOD_MILLIS        10000 // Period of VCC checks
 #endif
@@ -517,8 +570,8 @@ bool isVCCTooLowMultipleTimes() {
      * Check VCC every VCC_CHECK_PERIOD_MILLIS (10) seconds
      */
 
-    if (millis() - sLastVoltageCheckMillis >= VCC_CHECK_PERIOD_MILLIS) {
-        sLastVoltageCheckMillis = millis();
+    if (millis() - sLastVCCCheckMillis >= VCC_CHECK_PERIOD_MILLIS) {
+        sLastVCCCheckMillis = millis();
 
 #  if defined(INFO)
         readAndPrintVCCVoltageMillivolt(&Serial);
@@ -526,31 +579,31 @@ bool isVCCTooLowMultipleTimes() {
         readVCCVoltageMillivolt();
 #  endif
 
-        if (sVoltageTooLowCounter < VCC_CHECKS_TOO_LOW_BEFORE_STOP) {
+        if (sVCCTooLowCounter < VCC_CHECKS_TOO_LOW_BEFORE_STOP) {
             /*
              * Do not check again if shutdown has happened
              */
             if (sVCCVoltageMillivolt > VCC_STOP_THRESHOLD_MILLIVOLT) {
-                sVoltageTooLowCounter = 0; // reset counter
+                sVCCTooLowCounter = 0; // reset counter
             } else {
                 /*
                  * Voltage too low, wait VCC_CHECKS_TOO_LOW_BEFORE_STOP (6) times and then shut down.
                  */
                 if (sVCCVoltageMillivolt < VCC_EMERGENCY_STOP_MILLIVOLT) {
                     // emergency shutdown
-                    sVoltageTooLowCounter = VCC_CHECKS_TOO_LOW_BEFORE_STOP;
+                    sVCCTooLowCounter = VCC_CHECKS_TOO_LOW_BEFORE_STOP;
 #  if defined(INFO)
                     Serial.println(F("Voltage < " STR(VCC_EMERGENCY_STOP_MILLIVOLT) " mV detected -> emergency shutdown"));
 #  endif
                 } else {
-                    sVoltageTooLowCounter++;
+                    sVCCTooLowCounter++;
 #  if defined(INFO)
                     Serial.print(F("Voltage < " STR(VCC_STOP_THRESHOLD_MILLIVOLT) " mV detected: "));
-                    Serial.print(VCC_CHECKS_TOO_LOW_BEFORE_STOP - sVoltageTooLowCounter);
+                    Serial.print(VCC_CHECKS_TOO_LOW_BEFORE_STOP - sVCCTooLowCounter);
                     Serial.println(F(" tries left"));
 #  endif
                 }
-                if (sVoltageTooLowCounter == VCC_CHECKS_TOO_LOW_BEFORE_STOP) {
+                if (sVCCTooLowCounter == VCC_CHECKS_TOO_LOW_BEFORE_STOP) {
                     /*
                      * 6 times voltage too low -> shutdown
                      */
@@ -562,30 +615,63 @@ bool isVCCTooLowMultipleTimes() {
     return false;
 }
 
-void resetVCCTooLowMultipleTimes(){
-    sVoltageTooLowCounter = 0;
+/*
+ * Return true if VCC_EMERGENCY_STOP_MILLIVOLT (3 V) reached
+ */
+bool isVCCTooLow() {
+    return (sVCCVoltageMillivolt < VCC_EMERGENCY_STOP_MILLIVOLT);
 }
 
-bool isVoltageTooLow(){
-    return (sVoltageTooLowCounter >= VCC_CHECKS_TOO_LOW_BEFORE_STOP);
+void resetVCCTooLowMultipleTimes() {
+    sVCCTooLowCounter = 0;
 }
 
 /*
+ * Recommended VCC is 1.8 V to 5.5 V, absolute maximum VCC is 6.0 V.
+ * Check for 5.25 V, because such overvoltage is quite unlikely to happen during regular operation.
+ * Raw reading of 1.1 V is 225 at 5 V.
+ * Raw reading of 1.1 V is 221 at 5.1 V.
+ * Raw reading of 1.1 V is 214 at 5.25 V (+5 %).
+ * Raw reading of 1.1 V is 204 at 5.5 V (+10 %).
+ * @return true if 5 % overvoltage reached
+ */
+bool isVCCTooHigh() {
+    readVCCVoltageMillivolt();
+    return (sVCCVoltageMillivolt > VCC_TOO_HIGH_STOP_MILLIVOLT);
+}
+bool isVCCTooHighSimple() {
+    readVCCVoltageMillivoltSimple();
+    return (sVCCVoltageMillivolt > VCC_TOO_HIGH_STOP_MILLIVOLT);
+}
+
+/*
+ * Temperature sensor is enabled by selecting the appropriate channel.
+ * Different formula for 328P and 328PB!
  * !!! Function without handling of switched reference and channel.!!!
- * Use it ONLY if you only use INTERNAL reference (call getTemperatureSimple()) in your program.
+ * Use it ONLY if you only use INTERNAL reference (e.g. only call getTemperatureSimple()) in your program.
  */
 float getTemperatureSimple(void) {
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
     return 0.0;
 #else
-// use internal 1.1 volt as reference
-    float tTemp = (readADCChannelWithReferenceMultiSamples(ADC_TEMPERATURE_CHANNEL_MUX, INTERNAL, 2) - 317);
-    return (tTemp * (4 / 1.22));
+    // use internal 1.1 volt as reference. 4 times oversample. Assume the signal has noise, but never verified :-(
+    uint16_t tTempRaw = readADCChannelWithReferenceOversample(ADC_TEMPERATURE_CHANNEL_MUX, INTERNAL, 2);
+#if defined(LOCAL_DEBUG)
+    Serial.print(F("TempRaw="));
+    Serial.println(tTempRaw);
+#endif
+#if defined(__AVR_ATmega328P__)
+    tTempRaw -= 317;
+    return (float)tTempRaw / 1.22;
+#elif defined(__AVR_ATmega328PB__)
+    tTempRaw -= 245;
+    return (float)tTempRaw;
+#endif
 #endif
 }
 
 /*
- * Handles reference and channel switching by introducing the appropriate delays.
+ * Handles usage of 1.1 V reference and channel switching by introducing the appropriate delays.
  */
 float getTemperature(void) {
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
@@ -593,9 +679,7 @@ float getTemperature(void) {
 #else
     // use internal 1.1 volt as reference
     checkAndWaitForReferenceAndChannelToSwitch(ADC_TEMPERATURE_CHANNEL_MUX, INTERNAL);
-    // assume the signal has noise, but never verified :-(
-    float tTemp = (readADCChannelWithReferenceOversample(ADC_TEMPERATURE_CHANNEL_MUX, INTERNAL, 1) - 317);
-    return (tTemp / 1.22);
+    return getTemperatureSimple();
 #endif
 }
 
@@ -605,4 +689,7 @@ float getTemperature(void) {
     }
 #endif // defined(ADC_UTILS_ARE_AVAILABLE)
 
+#if defined(LOCAL_DEBUG)
+#undef LOCAL_DEBUG
+#endif
 #endif // _ADC_UTILS_HPP

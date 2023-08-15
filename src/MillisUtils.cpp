@@ -119,7 +119,7 @@ bool areMillisGone(unsigned int aMillis, unsigned long *aLastMillisPtr) {
  * calling a function consisting of just __asm__ volatile ("nop"); gives 0 to 1 micro second
  * Use of Serial. makes it incompatible with BlueDisplay library.
  */
-void speedTestWith1kCalls(void (*aFunctionUnderTest)(void)) {
+void speedTestWith1kCalls(Print *aSerial, void (*aFunctionUnderTest)(void)) {
     uint32_t tMillisStart = millis();
     for (uint_fast8_t i = 0; i < 100; ++i) {
         // unroll 10 times
@@ -135,7 +135,7 @@ void speedTestWith1kCalls(void (*aFunctionUnderTest)(void)) {
         aFunctionUnderTest();
     }
     uint32_t tMillisRequired = millis() - tMillisStart;
-    Serial.print(F("Function call takes "));
+    aSerial->print(F("Function call takes "));
     if (tMillisRequired > 1000000) {
         Serial.print(tMillisRequired / 1000);
         Serial.print(",");
@@ -145,5 +145,5 @@ void speedTestWith1kCalls(void (*aFunctionUnderTest)(void)) {
         Serial.print(tMillisRequired);
         Serial.print(F(" micro"));
     }
-    Serial.println(F(" seconds."));
+    aSerial->println(F(" seconds."));
 }

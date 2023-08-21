@@ -62,6 +62,8 @@ void addToMillis(uint16_t aMillisToAdd) {
 void disableMillisInterrupt() {
 #if defined(TIMSK) && defined(TOIE)
     cbi(TIMSK, TOIE);
+#elif defined(TIMSK0) && defined(TOIE0)
+    cbi(TIMSK0, TOIE0); // e.g. ATmega328
 #else
 #error  Timer 0 overflow interrupt not disabled correctly
 #endif
@@ -77,6 +79,12 @@ void enableMillisInterrupt(uint16_t aMillisToAddForCompensation) {
         timer0_millis += aMillisToAddForCompensation;
     }
     sbi(TIMSK, TOIE);
+#elif defined(TIMSK0) && defined(TOIE0)
+    if ((TIMSK0 & _BV(TOIE0)) == 0) {
+        // still disabled -> compensate
+        timer0_millis += aMillisToAddForCompensation;
+    }
+    sbi(TIMSK0, TOIE0); // e.g. ATmega328
 #else
 #error  Timer 0 overflow interrupt not enabled correctly
 #endif

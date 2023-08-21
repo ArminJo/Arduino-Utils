@@ -118,21 +118,21 @@ extern uint16_t sVCCVoltageMillivolt;
 extern long sLastVCCCheckMillis;
 extern uint8_t sVCCTooLowCounter;
 
-uint16_t readADCChannel(uint8_t aChannelNumber);
-uint16_t readADCChannelWithReference(uint8_t aChannelNumber, uint8_t aReference);
-uint16_t waitAndReadADCChannelWithReference(uint8_t aChannelNumber, uint8_t aReference);
-uint16_t waitAndReadADCChannelWithReferenceAndRestoreADMUXAndReference(uint8_t aChannelNumber, uint8_t aReference);
-uint16_t readADCChannelWithOversample(uint8_t aChannelNumber, uint8_t aOversampleExponent);
-void setADCChannelAndReferenceForNextConversion(uint8_t aChannelNumber, uint8_t aReference);
-uint16_t readADCChannelWithReferenceOversample(uint8_t aChannelNumber, uint8_t aReference, uint8_t aOversampleExponent);
-uint16_t readADCChannelWithReferenceOversampleFast(uint8_t aChannelNumber, uint8_t aReference, uint8_t aOversampleExponent);
-uint16_t readADCChannelWithReferenceMultiSamples(uint8_t aChannelNumber, uint8_t aReference, uint8_t aNumberOfSamples);
-uint16_t readADCChannelWithReferenceMax(uint8_t aChannelNumber, uint8_t aReference, uint16_t aNumberOfSamples);
-uint16_t readADCChannelWithReferenceMaxMicros(uint8_t aChannelNumber, uint8_t aReference, uint16_t aMicrosecondsToAquire);
-uint16_t readUntil4ConsecutiveValuesAreEqual(uint8_t aChannelNumber, uint8_t aReference, uint8_t aDelay, uint8_t aAllowedDifference,
+uint16_t readADCChannel(uint8_t aADCChannelNumber);
+uint16_t readADCChannelWithReference(uint8_t aADCChannelNumber, uint8_t aReference);
+uint16_t waitAndReadADCChannelWithReference(uint8_t aADCChannelNumber, uint8_t aReference);
+uint16_t waitAndReadADCChannelWithReferenceAndRestoreADMUXAndReference(uint8_t aADCChannelNumber, uint8_t aReference);
+uint16_t readADCChannelWithOversample(uint8_t aADCChannelNumber, uint8_t aOversampleExponent);
+void setADCChannelAndReferenceForNextConversion(uint8_t aADCChannelNumber, uint8_t aReference);
+uint16_t readADCChannelWithReferenceOversample(uint8_t aADCChannelNumber, uint8_t aReference, uint8_t aOversampleExponent);
+uint16_t readADCChannelWithReferenceOversampleFast(uint8_t aADCChannelNumber, uint8_t aReference, uint8_t aOversampleExponent);
+uint16_t readADCChannelWithReferenceMultiSamples(uint8_t aADCChannelNumber, uint8_t aReference, uint8_t aNumberOfSamples);
+uint16_t readADCChannelWithReferenceMax(uint8_t aADCChannelNumber, uint8_t aReference, uint16_t aNumberOfSamples);
+uint16_t readADCChannelWithReferenceMaxMicros(uint8_t aADCChannelNumber, uint8_t aReference, uint16_t aMicrosecondsToAquire);
+uint16_t readUntil4ConsecutiveValuesAreEqual(uint8_t aADCChannelNumber, uint8_t aReference, uint8_t aDelay, uint8_t aAllowedDifference,
         uint8_t aMaxRetries);
 
-uint8_t checkAndWaitForReferenceAndChannelToSwitch(uint8_t aChannelNumber, uint8_t aReference);
+uint8_t checkAndWaitForReferenceAndChannelToSwitch(uint8_t aADCChannelNumber, uint8_t aReference);
 
 /*
  * readVCC*() functions store the result in sVCCVoltageMillivolt or sVCCVoltage

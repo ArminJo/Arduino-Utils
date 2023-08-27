@@ -651,7 +651,7 @@ bool isVCCTooHighSimple() {
  * !!! Function without handling of switched reference and channel.!!!
  * Use it ONLY if you only use INTERNAL reference (e.g. only call getTemperatureSimple()) in your program.
  */
-float getTemperatureSimple(void) {
+float getCPUTemperatureSimple(void) {
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
     return 0.0;
 #else
@@ -676,12 +676,15 @@ float getTemperatureSimple(void) {
  * Handles usage of 1.1 V reference and channel switching by introducing the appropriate delays.
  */
 float getTemperature(void) {
+    return getCPUTemperature();
+}
+float getCPUTemperature(void) {
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
     return 0.0;
 #else
     // use internal 1.1 volt as reference
     checkAndWaitForReferenceAndChannelToSwitch(ADC_TEMPERATURE_CHANNEL_MUX, INTERNAL);
-    return getTemperatureSimple();
+    return getCPUTemperatureSimple();
 #endif
 }
 

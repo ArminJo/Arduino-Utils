@@ -49,7 +49,34 @@ SHIFT_VALUE_FOR_REFERENCE	LITERAL1
 ADC_TEMPERATURE_CHANNEL_MUX	LITERAL1
 
 # From HexDump.cpp
+printBytePaddedHex	LITERAL1
+printWordPaddedHex	LITERAL1
 printMemoryHexDump	LITERAL1
+
+# From AVRUtils.cpp
+initSleep	LITERAL1
+initPeriodicSleepWithWatchdog	LITERAL1
+computeSleepMillis	LITERAL1
+sleepWithWatchdog	LITERAL1
+
+getHeapStart	LITERAL1
+getCurrentFreeHeapOrStack	LITERAL1
+getCurrentAvailableHeap	LITERAL1
+printHeapStart	LITERAL1
+printCurrentFreeHeap	LITERAL1
+printCurrentAvailableHeap	LITERAL1
+
+initStackFreeMeasurement	LITERAL1
+getStackUnusedBytes	LITERAL1
+getStackUsedBytes	LITERAL1
+getStackUnusedAndUsedBytes	LITERAL1
+printStackUsedBytes	LITERAL1
+printStackUnusedAndUsedBytes	LITERAL1
+printStackUnusedAndUsedBytesIfChanged	LITERAL1
+printRAMInfo	LITERAL1
+
+isAddressInRAM	LITERAL1
+isAddressBelowHeap	LITERAL1
 
 #######################################
 # Constants (LITERAL1)

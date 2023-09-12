@@ -47,10 +47,16 @@
 #endif
 
 #include "AVRUtils.h"
+#include "HexDump.h"
 
 #if defined(CODE_FOR_ATTINY)
 #include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
 #else
+
+//#define SIZE_OF_DUMMY_ARRAY     1800    // Stack runs into data
+//#define SIZE_OF_DUMMY_ARRAY     1700    // Stack is OK, but no heap is available
+#define SIZE_OF_DUMMY_ARRAY     1600    // Stack is OK, and small heap is available
+uint8_t sDummyArray[SIZE_OF_DUMMY_ARRAY] __attribute__((section(".noinit"))); // Place it at end of BSS to be first overwritten by stack.
 
 /*
  * !!! THIS WORKS ONLY WITH VERSION 8.0 OF THE OPTIBOOT BOOTLOADER !!!
@@ -82,7 +88,8 @@ void resetFlagsInit(void) {
 
 #endif
 
-bool sBootReasonWasPowerUp = false;
+uint16_t sStaticVariable = 1; // Resides in data segment (variables initialized with values != zero)
+bool sBootReasonWasPowerUp = false; // Resides in BSS segment, because it is initialized with 0;
 
 //#include "ShowInfo.h"
 
@@ -102,6 +109,10 @@ bool sBootReasonWasPowerUp = false;
 
 uint8_t sMCUSRStored; // content of MCUSR register at startup
 #endif
+
+// Helper macro for getting a macro definition as string
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
 
 void setup() {
 
@@ -125,6 +136,12 @@ void setup() {
     writeUnsignedByteHexWithPrefix(sMCUSRStored);
     write1Start8Data1StopNoParity('\n');
 #else
+
+    for (int i = 0; i < SIZE_OF_DUMMY_ARRAY; ++i) {
+        sDummyArray[i] = 0; // Mark array with 0 to detect overwriting by stack
+    }
+    initStackFreeMeasurement();
+
     MCUSR = 0;
     if (sMCUSR & (1 << PORF)) {
         sBootReasonWasPowerUp = true; // always true for old Optiboot bootloader
@@ -133,12 +150,22 @@ void setup() {
     Serial.begin(115200);
 
     // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__ "\nMCUSR="));
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__ ));
     Serial.print(F("sMCUSR=0x"));
     Serial.print(sMCUSR, HEX);
     Serial.print(F(" BootReasonWasPowerUp="));
     Serial.println(sBootReasonWasPowerUp);
 #endif
+
+    /*
+     * Prints to avoid optimizing away the two variables
+     */
+    sStaticVariable = analogRead(A0); // to avoid optimizing away sStaticVariable
+    Serial.print(F("sStaticVariable filled by analogRead(A0)="));
+    Serial.println(sStaticVariable);
+    Serial.print(F("sDummyArray[1000]=0x"));
+    Serial.println(sDummyArray[1000], HEX);
+    Serial.println(F("DummyArray size=" STR(SIZE_OF_DUMMY_ARRAY)));
 
     // This requires ShowInfo
 //    printMCUSR(sMCUSRStored);
@@ -158,8 +185,15 @@ void setup() {
     tone(TONE_OUT_PIN, BEEP_FREQUENCY, BEEP_START_DURATION_MILLIS);
     delay(BEEP_START_DURATION_MILLIS);
 
-    Serial.print(F("Stack+RAM="));
-    Serial.println(getFreeRam());
+    Serial.println();
+    printRAMInfo(&Serial);
+    printStackUnusedAndUsedBytes(&Serial);
+    Serial.println();
+
+    printMemoryHexDump((uint8_t*) (RAMEND - 128) + 1, 128, true);
+
+    Serial.println();
+//}
 
     /*
      * init sleep mode and wakeup period
@@ -181,7 +215,7 @@ void setup() {
 
 void loop() {
 
-    // 4 second CPU idle
+// 4 second CPU idle
     for (int i = 0; i < 100; ++i) {
         delayMicroseconds(40000);
     }

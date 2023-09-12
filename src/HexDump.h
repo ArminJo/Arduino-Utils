@@ -28,6 +28,6 @@
 
 void printBytePaddedHex(uint8_t aHexValueToPrint);
 void printWordPaddedHex(uint16_t aHexValueToPrint);
-void printMemoryHexDump(uint8_t *aMemory, size_t aSizeOfMemoryToPrint, bool aPrintAbsoluteAddress = false);
+void printMemoryHexDump(uint8_t *aMemory, uint16_t aSizeOfMemoryToPrint, bool aPrintAbsoluteAddress = false);
 
 #endif // _HEX_DUMP_H

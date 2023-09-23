@@ -69,32 +69,43 @@ int16_t sInputValueForPrint;
 int16_t sLowpass1;
 int16_t sLowpass2;
 int16_t sLowpass3;
-int16_t sDoubleLowpass3;
-int16_t sTripleLowpass3;
 int16_t sLowpass4;
-int16_t sDoubleLowpass4;
 int16_t sLowpass5;
+
+int16_t sDoubleLowpass3;
+int16_t sDoubleLowpass4;
 int16_t sDoubleLowpass5;
+
+int16_t sTripleLowpass3;
 
 // only required if we must deal with small values or high exponents (< 32)
 int32_t sLowpass3_int32;
 int32_t sLowpass5_int32;
 int32_t sLowpass8_int32; // The low pass value is in the upper word, the lower word holds the fraction
+
 float sLowpass5_float;
 float sLowpass8_float;
 
 /*
  * Biquad
  */
-int32_t sBiQuadLowpass_int16 = 0;
-int32_t sBiQuadBandpass_int16 = 0;
-int32_t sBiQuadHighpass_int16; // must not be static, is always computed new from Lowpass and Bandpass
+int16_t sBiQuadLowpass_int16 = 0;
+int16_t sBiQuadBandpass_int16 = 0;
+int16_t sBiQuadHighpass_int16; // must not be static, is always computed new from Lowpass and Bandpass
 
 int32_t sBiQuadLowpass_int32_shift8 = 0;
 int32_t sBiQuadBandpass_int32_shift8 = 0;
 int32_t sBiQuadHighpass_int32_shift8; // must not be static, is always computed new from Lowpass and Bandpass
+
 int16_t sDampingFactor_shift8 = 256;
 int16_t sAlpha_shift8 = 4; // 256 = 1, 128 = 1/2, 64 = 1/4, 16 = 1/16, 4 = 1/32
+
+uint32_t FilterSelectionArray[8] {
+PRINT_SIGNIFICANT_FILTERS, PRINT_ALL_LOW_PASS, PRINT_LOW_HIGH_PASS, PRINT_BAND_AND_REJECT_PASS, PRINT_LOW_PASS_1_3_5_8,
+PRINT_LOW_PASS_16_32, PRINT_HIGHER_ORDER_LOW_PASS, PRINT_ALL_BI_QUAD };
+
+const char *FilterSelectionStringArray[8] { "SIGNIFICANT_FILTERS", "ALL_LOW_PASS", "LOW_AND_HIGH_PASS", "BAND_PASS_AND_REJECT",
+        "LOW_PASS_1_3_5_8", "LOW_PASS_16_32", "HIGHER_ORDER_LOW_PASS_16", "BI_QUAD_FILTERS_WITH_DAMPING_0" };
 
 /************************
  * Convenience functions
@@ -276,6 +287,35 @@ void doLowpass8_float(float *aLowpassAccumulator_float, int16_t aInputValue) {
     *aLowpassAccumulator_float += (aInputValue - *aLowpassAccumulator_float) / 256.0; // 24 to 34 us
 }
 
+void resetFilters() {
+    sLowpass1 = 0;
+    sLowpass2 = 0;
+    sLowpass3 = 0;
+    sLowpass4 = 0;
+    sLowpass5 = 0;
+
+    sDoubleLowpass3 = 0;
+    sDoubleLowpass4 = 0;
+    sDoubleLowpass5 = 0;
+
+    sTripleLowpass3 = 0;
+
+    sLowpass3_int32 = 0;
+    sLowpass5_int32 = 0;
+    sLowpass8_int32 = 0;
+
+    sLowpass5_float = 0;
+    sLowpass8_float = 0;
+
+    sBiQuadHighpass_int16 = 0;
+    sBiQuadBandpass_int16 = 0;
+    sBiQuadLowpass_int16 = 0;
+
+    sBiQuadHighpass_int32_shift8 = 0;
+    sBiQuadBandpass_int32_shift8 = 0;
+    sBiQuadLowpass_int32_shift8 = 0;
+}
+
 /*
  * The main test function
  */
@@ -360,135 +400,164 @@ void doFiltersStep(int16_t aInputValue) {
     sBiQuadLowpass_int32_shift8 = sBiQuadLowpass_int32_shift8 + (((sBiQuadBandpass_int32_shift8 * sAlpha_shift8) + (1 << 7)) >> 8);
 }
 
-void printFiltersCaption(uint32_t aPrintMask) {
+/*
+ * Use "P" instead of "pass", since we have problems with the length of caption
+ */
+void printFiltersCaption(uint8_t aFilterSelection) {
+    uint32_t aPrintMask = FilterSelectionArray[aFilterSelection];
     Serial.print(F("Input "));
 
-    if (aPrintMask & PRINT_EMA_1) {
-        Serial.print(F("Lowpass1 "));
+    if (aPrintMask & PRINT_LP_1) {
+        Serial.print(F("LowP1_16 "));
     }
-    if (aPrintMask & PRINT_EMA_2) {
-        Serial.print(F("Lowpass2 "));
+    if (aPrintMask & PRINT_LP_2) {
+        Serial.print(F("LowP2_16 "));
     }
-    if (aPrintMask & PRINT_EMA_3) {
-        Serial.print(F("Lowpass3 "));
+    if (aPrintMask & PRINT_LP_3) {
+        Serial.print(F("LowP3_16 "));
     }
-    if (aPrintMask & PRINT_EMA_3_32) {
-        Serial.print(F("Lowpass3_int32 "));
+    if (aPrintMask & PRINT_LP_3_32) {
+        Serial.print(F("LowP3_32 "));
     }
-    if (aPrintMask & PRINT_2EMA_3) {
-        Serial.print(F("DoubleLowpass3 "));
+    if (aPrintMask & PRINT_DOUBLE_LP_3) {
+        Serial.print(F("DoubleLowP3_16 "));
     }
-    if (aPrintMask & PRINT_3EMA_3) {
-        Serial.print(F("TripleLowpass3 "));
+    if (aPrintMask & PRINT_TRIPLE_LP_3) {
+        Serial.print(F("TripleLowP3_16 "));
     }
-    if (aPrintMask & PRINT_EMA_4) {
-        Serial.print(F("Lowpass4 "));
+    if (aPrintMask & PRINT_LP_4) {
+        Serial.print(F("LowP4_16 "));
     }
-    if (aPrintMask & PRINT_2EMA_4) {
-        Serial.print(F("DoubleLowpass4 "));
+    if (aPrintMask & PRINT_DOUBLE_LP_4) {
+        Serial.print(F("DoubleLowP4_16 "));
     }
-    if (aPrintMask & PRINT_EMA_5) {
-        Serial.print(F("Lowpass5 "));
+    if (aPrintMask & PRINT_LP_5) {
+        Serial.print(F("LowP5_16 "));
     }
-    if (aPrintMask & PRINT_EMA_5_32) {
-        Serial.print(F("Lowpass5_int32 "));
+    if (aPrintMask & PRINT_LP_5_32) {
+        Serial.print(F("LowP5_32 "));
     }
-    if (aPrintMask & PRINT_EMA_5_FLOAT) {
-        Serial.print(F("Lowpass5_float "));
+    if (aPrintMask & PRINT_LP_5_FLOAT) {
+        Serial.print(F("LowP5_float "));
     }
-    if (aPrintMask & PRINT_EMA_8_32) {
-        Serial.print(F("Lowpass8_int32 "));
+    if (aPrintMask & PRINT_LP_8_32) {
+        Serial.print(F("LowP8_32 "));
     }
-    if (aPrintMask & PRINT_EMA_8_FLOAT) {
-        Serial.print(F("Lowpass8_float "));
+    if (aPrintMask & PRINT_LP_8_FLOAT) {
+        Serial.print(F("LowP8_float "));
     }
-    if (aPrintMask & PRINT_HIGH_PASS_1) {
-        Serial.print(F("Highpass1 "));
+    if (aPrintMask & PRINT_HIGH_PASS_1_16) {
+        Serial.print(F("HighP1_16 "));
     }
-    if (aPrintMask & PRINT_HIGH_PASS_2) {
-        Serial.print(F("Highpass2 "));
+    if (aPrintMask & PRINT_HIGH_PASS_3_16) {
+        Serial.print(F("HighP3_16 "));
     }
+
     if (aPrintMask & PRINT_BAND_PASS_1_3) {
-        Serial.print(F("Bandpass1_3 "));
+        Serial.print(F("BandP1_3_16 "));
+    }
+    if (aPrintMask & PRINT_BAND_PASS_1_5) {
+        Serial.print(F("BandP1_5_16 "));
     }
     if (aPrintMask & PRINT_BAND_PASS_3_4) {
-        Serial.print(F("Bandpass3_4 "));
+        Serial.print(F("BandP3_4_16 "));
     }
-    if (aPrintMask & PRINT_BQ_LP) {
-        Serial.print(F("BiQuadLowpass "));
+    if (aPrintMask & PRINT_BAND_PASS_3_5) {
+        Serial.print(F("BandP3_5_16 "));
     }
-    if (aPrintMask & PRINT_BQ_HP) {
-        Serial.print(F("BiQuadHighpass "));
+
+    if (aPrintMask & PRINT_REJECT_3_4) {
+        Serial.print(F("Reject3_4_16 "));
     }
-    if (aPrintMask & PRINT_BQ_BP) {
-        Serial.print(F("BiQuadBandpass "));
+
+    if (aPrintMask & PRINT_BQ_LP_16) {
+        Serial.print(F("BiQuadLowP_16 "));
     }
-    Serial.println();
+    if (aPrintMask & PRINT_BQ_HP_16) {
+        Serial.print(F("BiQuadHighP_16 "));
+    }
+    if (aPrintMask & PRINT_BQ_BP_16) {
+        Serial.print(F("BiQuadBandP_16 "));
+    }
+
+    if (aPrintMask & PRINT_BQ_LP_32) {
+        Serial.print(F("BiQuadLowP_32 "));
+    }
+    if (aPrintMask & PRINT_BQ_HP_32) {
+        Serial.print(F("BiQuadHighP_32 "));
+    }
+    if (aPrintMask & PRINT_BQ_BP_32) {
+        Serial.print(F("BiQuadBandP_32 "));
+    }
+
+    Serial.print(F("__"));
+    Serial.print(FilterSelectionStringArray[aFilterSelection]);
+    Serial.println(F("__"));
 }
 
 void printFiltersResults(uint32_t aPrintMask) {
     Serial.print(sInputValueForPrint);
     Serial.print(" ");
 
-    if (aPrintMask & PRINT_EMA_1) {
+    if (aPrintMask & PRINT_LP_1) {
         Serial.print(sLowpass1);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_2) {
+    if (aPrintMask & PRINT_LP_2) {
         Serial.print(sLowpass2);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_3) {
+    if (aPrintMask & PRINT_LP_3) {
         Serial.print(sLowpass3);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_3_32) {
+    if (aPrintMask & PRINT_LP_3_32) {
         Serial.print(sLowpass3_int32 >> 8);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_2EMA_3) {
+    if (aPrintMask & PRINT_DOUBLE_LP_3) {
         Serial.print(sDoubleLowpass3);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_3EMA_3) {
+    if (aPrintMask & PRINT_TRIPLE_LP_3) {
         Serial.print(sTripleLowpass3);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_4) {
+    if (aPrintMask & PRINT_LP_4) {
         Serial.print(sLowpass4);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_2EMA_4) {
+    if (aPrintMask & PRINT_DOUBLE_LP_4) {
         Serial.print(sDoubleLowpass4);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_5) {
+    if (aPrintMask & PRINT_LP_5) {
         Serial.print(sLowpass5);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_5_32) {
+    if (aPrintMask & PRINT_LP_5_32) {
         Serial.print(sLowpass5_int32 >> 8);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_5_FLOAT) {
+    if (aPrintMask & PRINT_LP_5_FLOAT) {
         Serial.print(sLowpass5_float);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_8_32) {
+    if (aPrintMask & PRINT_LP_8_32) {
         Serial.print(sLowpass8_int32 >> 8);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_EMA_8_FLOAT) {
+    if (aPrintMask & PRINT_LP_8_FLOAT) {
         Serial.print(sLowpass8_float);
         Serial.print(" ");
     }
 
-    if (aPrintMask & PRINT_HIGH_PASS_1) {
+    if (aPrintMask & PRINT_HIGH_PASS_1_16) {
         Serial.print(sInputValueForPrint - sLowpass1);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_HIGH_PASS_2) {
-        Serial.print(sInputValueForPrint - sLowpass2);
+    if (aPrintMask & PRINT_HIGH_PASS_3_16) {
+        Serial.print(sInputValueForPrint - sLowpass3);
         Serial.print(" ");
     }
 
@@ -496,20 +565,45 @@ void printFiltersResults(uint32_t aPrintMask) {
         Serial.print(sLowpass1 - sLowpass3);
         Serial.print(" ");
     }
+    if (aPrintMask & PRINT_BAND_PASS_1_5) {
+        Serial.print(sLowpass1 - sLowpass5);
+        Serial.print(" ");
+    }
     if (aPrintMask & PRINT_BAND_PASS_3_4) {
         Serial.print(sLowpass3 - sLowpass4);
         Serial.print(" ");
     }
+    if (aPrintMask & PRINT_BAND_PASS_3_5) {
+        Serial.print(sLowpass3 - sLowpass5);
+        Serial.print(" ");
+    }
+    if (aPrintMask & PRINT_REJECT_3_4) {
+        Serial.print(sInputValueForPrint - (sLowpass3 - sLowpass4));
+        Serial.print(" ");
+    }
 
-    if (aPrintMask & PRINT_BQ_LP) {
+    if (aPrintMask & PRINT_BQ_LP_16) {
+        Serial.print(sBiQuadLowpass_int16);
+        Serial.print(" ");
+    }
+    if (aPrintMask & PRINT_BQ_HP_16) {
+        Serial.print(sBiQuadBandpass_int16);
+        Serial.print(" ");
+    }
+    if (aPrintMask & PRINT_BQ_BP_16) {
+        Serial.print(sBiQuadHighpass_int16);
+        Serial.print(" ");
+    }
+
+    if (aPrintMask & PRINT_BQ_LP_32) {
         Serial.print(sBiQuadLowpass_int32_shift8 >> 8);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_BQ_HP) {
+    if (aPrintMask & PRINT_BQ_HP_32) {
         Serial.print(sBiQuadHighpass_int32_shift8 >> 8);
         Serial.print(" ");
     }
-    if (aPrintMask & PRINT_BQ_BP) {
+    if (aPrintMask & PRINT_BQ_BP_32) {
         Serial.print(sBiQuadBandpass_int32_shift8 >> 8);
         Serial.print(" ");
     }

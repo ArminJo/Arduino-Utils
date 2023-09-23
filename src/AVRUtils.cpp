@@ -205,6 +205,11 @@ void printStackUnusedAndUsedBytesIfChanged(Print *aSerial) {
 }
 
 /*
+ * RAM starts of variables initialized with values != 0,
+ * followed by variables initialized with 0
+ * and variables not initialized by using attribute "__attribute__((section(".noinit")))".
+ * It ends with the heap and the stack.
+ *
  * Sample output if stack runs into data:
  * Size of Data + BSS, Heap start, Stack end=2041
  * Stack used 20 of 7

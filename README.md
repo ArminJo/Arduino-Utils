@@ -55,7 +55,11 @@ An EMA (**Exponential Moving Average**) filter behaves like an RC lowpass filter
 An EMA filter is implemented by e.g. the following statement:
 
 ```c++
-int16_t Lowpass5 += ((InputValue - Lowpass5) >> 5;
+int16_t sLowpass3;
+int16_t Lowpass5;
+...
+sLowpass3 += ((aInputValue - sLowpass3) + (1 << 2)) >> 3; // 1.8 us, alpha = 0.125, cutoff frequency 22.7 Hz @1kHz
+sLowpass5 += ((aInputValue - sLowpass5) + (1 << 4)) >> 5; // 2.5 us, alpha = 1/32 0.03125, cutoff frequency 5.13 Hz @1kHz
 ```
 which takes **2.5 &micro;s on a 16 MHz Arduino Uno**.
 

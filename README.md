@@ -22,33 +22,35 @@ Not yet available as Arduino library.
  &nbsp; &nbsp;
 [![Button API](https://img.shields.io/badge/API-yellow?logoColor=white&logo=OpenStreetMap)](https://arminjo.github.io/Arduino-Utils/classArduino-Utils.html)
  &nbsp; &nbsp;
-[![Button Changelog](https://img.shields.io/badge/Changelog-blue?logoColor=white&logo=AzureArtifacts)](https://github.com/ArminJo/Arduino-Utils#revision-history)
+[![Button Changelog](https://img.shields.io/badge/Changelog-blue?logoColor=white&logo=AzureArtifacts)](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#revision-history)
 
 </div>
 
 #### If you find this library useful, please give it a star.
 
+&#x1F30E; [Google Translate](https://translate.google.com/translate?sl=en&u=https://github.com/ArminJo/Arduino-Utils)
+
 <br/>
 
 # Table of content
-* [SimpleEMAFilters.hpp](https://github.com/ArminJo/Arduino-Utils#simpleemafiltershpp)
-* [ADCUtils.cpp](https://github.com/ArminJo/Arduino-Utils#adcutilscpp)
-* [HCSR04](https://github.com/ArminJo/Arduino-Utils#hcsr04)
-* [MeasureVoltageAndResistance.hpp](https://github.com/ArminJo/Arduino-Utils#measurevoltageandresistancehpp)
-* [BlinkLed.cpp](https://github.com/ArminJo/Arduino-Utils#blinkledcpp)
-* [ShowInfo](https://github.com/ArminJo/Arduino-Utils#showinfo)
-* [HexDump](https://github.com/ArminJo/Arduino-Utils#hexdump)
-* [AVRUtils.cpp](https://github.com/ArminJo/Arduino-Utils#avrutilscpp)
-* [MillisUtils.cpp](https://github.com/ArminJo/Arduino-Utils#millisutilscpp)
-* [DebugLevel.h](https://github.com/ArminJo/Arduino-Utils#debuglevelh)
-* [ATtinyUtils.cpp](https://github.com/ArminJo/Arduino-Utils#attinyutilscpp)
-* [AvrTracing.hpp](https://github.com/ArminJo/Arduino-Utils#avrtracinghpp)
-* [Utilities available as separate Arduino library](https://github.com/ArminJo/Arduino-Utils#utilities-available-as-separate-arduino-library)
-  * [ATtinySerialOut.cpp](https://github.com/ArminJo/Arduino-Utils#attinyserialoutcpp)
-  * [EasyButtonAtInt01.hpp](https://github.com/ArminJo/Arduino-Utils#easybuttonatint01hpp)
-  * [The very useful digitalWriteFast.h file based on the version from Watterott electronic.](https://github.com/ArminJo/Arduino-Utils#the-very-useful-digitalwritefasth-file-based-on-the-version-from-watterott-electronic)
-* [Revision History](https://github.com/ArminJo/Arduino-Utils#revision-history)
-* [CI](https://github.com/ArminJo/Arduino-Utils#ci)
+* [SimpleEMAFilters.hpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#simpleemafiltershpp)
+* [ADCUtils.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#adcutilscpp)
+* [HCSR04](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#hcsr04)
+* [MeasureVoltageAndResistance.hpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#measurevoltageandresistancehpp)
+* [BlinkLed.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#blinkledcpp)
+* [ShowInfo](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#showinfo)
+* [HexDump](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#hexdump)
+* [AVRUtils.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#avrutilscpp)
+* [MillisUtils.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#millisutilscpp)
+* [DebugLevel.h](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#debuglevelh)
+* [ATtinyUtils.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#attinyutilscpp)
+* [AvrTracing.hpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#avrtracinghpp)
+* [Utilities available as separate Arduino library](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#utilities-available-as-separate-arduino-library)
+  * [ATtinySerialOut.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#attinyserialoutcpp)
+  * [EasyButtonAtInt01.hpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#easybuttonatint01hpp)
+  * [The very useful digitalWriteFast.h file based on the version from Watterott electronic.](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#the-very-useful-digitalwritefasth-file-based-on-the-version-from-watterott-electronic)
+* [Revision History](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#revision-history)
+* [CI](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#ci)
 
 # SimpleEMAFilters.hpp
 An EMA (**Exponential Moving Average**) filter behaves like an RC lowpass filter with RC = SamplePeriod((1-alpha)/alpha) see [here](https://en.wikipedia.org/wiki/Low-pass_filter#Simple_infinite_impulse_response_filter).<br/>

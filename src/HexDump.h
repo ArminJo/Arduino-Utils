@@ -26,8 +26,12 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define _16_BYTES_PER_LINE  16
+
 void printBytePaddedHex(uint8_t aHexValueToPrint);
 void printWordPaddedHex(uint16_t aHexValueToPrint);
-void printMemoryHexDump(uint8_t *aMemory, uint16_t aSizeOfMemoryToPrint, bool aPrintAbsoluteAddress = false);
+void printBufferHexDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);
+void printBufferHexAndASCIIDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);
+void printMemoryHexDump(uint8_t *aMemory, uint16_t aSizeOfMemoryToPrint, uint8_t aBytesPerLine = _16_BYTES_PER_LINE, bool aPrintAscii = true, bool aPrintShortAddress = false, bool aPrintRelativeAddress = false);
 
 #endif // _HEX_DUMP_H

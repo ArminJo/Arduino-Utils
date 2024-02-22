@@ -78,7 +78,7 @@ int16_t sDoubleLowpass5;
 
 int16_t sTripleLowpass3;
 
-// only required if we must deal with small values or high exponents (< 32)
+// only required if we must deal with small values or high exponents (> 32)
 int32_t sLowpass3_int32;
 int32_t sLowpass5_int32;
 int32_t sLowpass8_int32; // The low pass value is in the upper word, the lower word holds the fraction

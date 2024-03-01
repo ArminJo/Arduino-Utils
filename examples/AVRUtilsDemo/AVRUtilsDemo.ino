@@ -1,9 +1,10 @@
 /*
  *  AVRUtilsDemo.cpp
  *
- *  Demo of using 4 seconds sleep on an ATtiny
+ *  Demo of 2 seconds sleep with watchdog
+ *  Demo of printRAMInfo() and printStackUnusedAndUsedBytes ()
  *
- *  Copyright (C) 2020  Armin Joachimsmeyer
+ *  Copyright (C) 2020-2024  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -39,16 +40,16 @@
 
 #if defined(__AVR__)
 
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
+#include "AVRUtils.h"
+#include "ShowInfo.h"
+#include "HexDump.hpp"
+
+#  if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
     || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
     || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) \
     || defined(__AVR_ATtiny88__)
-#define CODE_FOR_ATTINY
+#  define CODE_FOR_ATTINY
 #endif
-
-#include "AVRUtils.h"
-#include "HexDump.h"
-
 #if defined(CODE_FOR_ATTINY)
 #include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
 #else
@@ -57,58 +58,24 @@
 //#define SIZE_OF_DUMMY_ARRAY     1700    // Stack is OK, but no heap is available
 #define SIZE_OF_DUMMY_ARRAY     1600    // Stack is OK, and small heap is available
 uint8_t sDummyArray[SIZE_OF_DUMMY_ARRAY] __attribute__((section(".noinit"))); // Place it at end of BSS to be first overwritten by stack.
-
-/*
- * !!! THIS WORKS ONLY WITH VERSION 8.0 OF THE OPTIBOOT BOOTLOADER !!!
- First, we need a variable to hold the reset cause that can be written before
- early sketch initialization (that might change r2), and won't be reset by the
- various initialization code.
- avr-gcc provides for this via the ".noinit" section.
- */
-uint8_t sMCUSR __attribute__ ((section(".noinit")));
-
-/*
- Next, we need to put some code to save reset cause from the bootloader (in r2)
- to the variable.  Again, avr-gcc provides special code sections for this.
- If compiled with link time optimization (-flto), as done by the Arduino
- IDE version 1.6 and higher, we need the "used" attribute to prevent this
- from being omitted.
- */
-void resetFlagsInit(void) __attribute__ ((naked))
-__attribute__ ((used))
-__attribute__ ((section (".init0")));
-void resetFlagsInit(void) {
-    /*
-     save the reset flags passed from the bootloader
-     This is a "simple" matter of storing (STS) r2 in the special variable
-     that we have created. We use assembler to access the right variable.
-     */
-    __asm__ __volatile__ ("sts %0, r2\n" : "=m" (sMCUSR) :);
-}
-
 #endif
-
-uint16_t sStaticVariable = 1; // Resides in data segment (variables initialized with values != zero)
-bool sBootReasonWasPowerUp = false; // Resides in BSS segment, because it is initialized with 0;
-
-//#include "ShowInfo.h"
 
 #define VERSION_EXAMPLE "1.0"
 
-#define LED_PIN  PB1
 #define TONE_OUT_PIN 4
-#define BEEP_FREQUENCY 2100
-#define BEEP_START_DURATION_MILLIS 400
-#define BEEP_DEFAULT_DURATION_MILLIS 80
 
 #if defined(CODE_FOR_ATTINY)
+#define LED_PIN  PB1
 // Pin 1 has an LED connected on my Digispark board.
 #  if (LED_PIN == TX_PIN)
 #error LED pin must not be equal TX pin (pin 2).
 #  endif
 
-uint8_t sMCUSRStored; // content of MCUSR register at startup
+#else
+#define LED_PIN  LED_BUILTIN
 #endif
+
+uint8_t sMCUSRStored; // content of MCUSR register at startup
 
 // Helper macro for getting a macro definition as string
 #define STR_HELPER(x) #x
@@ -128,49 +95,43 @@ void setup() {
         GPIOR0 = 0; // Clear it to detect a jmp 0
     }
 
+    initStackFreeMeasurement();
+
     /*
      * Initialize the serial pin as an output for Serial.print like debugging
      */
     initTXPin();
-    writeString(F("START " __FILE__ "\nVersion " VERSION_EXAMPLE " from " __DATE__ "\nMCUSR="));
-    writeUnsignedByteHexWithPrefix(sMCUSRStored);
-    write1Start8Data1StopNoParity('\n');
 #else
 
+    sMCUSRStored = MCUSR; // content of MCUSR register at startup
+    MCUSR = 0;
+    wdt_disable();
+
     for (int i = 0; i < SIZE_OF_DUMMY_ARRAY; ++i) {
-        sDummyArray[i] = 0; // Mark array with 0 to detect overwriting by stack
+        sDummyArray[i] = 0; // Mark array with 0 to detect overwriting by StackFreeMeasurement
     }
     initStackFreeMeasurement();
 
-    MCUSR = 0;
-    if (sMCUSR & (1 << PORF)) {
-        sBootReasonWasPowerUp = true; // always true for old Optiboot bootloader
-    }
-
     Serial.begin(115200);
 
+#endif // defined(CODE_FOR_ATTINY)
     // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__ ));
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
+    Serial.println();
+
     Serial.print(F("sMCUSR=0x"));
-    Serial.print(sMCUSR, HEX);
-    Serial.print(F(" BootReasonWasPowerUp="));
-    Serial.println(sBootReasonWasPowerUp);
-#endif
+    Serial.print(sMCUSRStored, HEX);
+    Serial.print(F(" => Boot reason is"));
+    printMCUSR(sMCUSRStored);
+
+    printBODLevel();
 
     /*
-     * Prints to avoid optimizing away the two variables
+     * Prints to avoid optimizing away the sDummyArray, which is first overwritten by stack.
      */
-    sStaticVariable = analogRead(A0); // to avoid optimizing away sStaticVariable
-    Serial.print(F("sStaticVariable filled by analogRead(A0)="));
-    Serial.println(sStaticVariable);
     Serial.print(F("sDummyArray[1000]=0x"));
     Serial.println(sDummyArray[1000], HEX);
     Serial.println(F("DummyArray size=" STR(SIZE_OF_DUMMY_ARRAY)));
-
-    // This requires ShowInfo
-//    printMCUSR(sMCUSRStored);
-//    printBODLevel();
-//    printFuses();
 
     pinMode(LED_PIN, OUTPUT);
 
@@ -182,17 +143,22 @@ void setup() {
     digitalWrite(LED_PIN, 0);
     delay(200);
 
-    tone(TONE_OUT_PIN, BEEP_FREQUENCY, BEEP_START_DURATION_MILLIS);
-    delay(BEEP_START_DURATION_MILLIS);
+    tone(TONE_OUT_PIN, 2200, 400);
+    delay(400);
 
     Serial.println();
     printRAMInfo(&Serial);
     printStackUnusedAndUsedBytes(&Serial);
-    Serial.println();
-
-    printMemoryHexDump((uint8_t*) (RAMEND - 128) + 1, 128, true);
 
     Serial.println();
+
+    Serial.println(F("Dump stack / end of RAM"));
+    printMemoryHexDump((uint8_t*) (RAMEND - 256) + 1, 256);
+
+    Serial.println();
+    printStackUsedBytes(&Serial);
+    Serial.println();
+
 //}
 
     /*
@@ -215,16 +181,19 @@ void setup() {
 
 void loop() {
 
-// 4 second CPU idle
-    for (int i = 0; i < 100; ++i) {
-        delayMicroseconds(40000);
-    }
     digitalWrite(LED_PIN, HIGH);
-    delayMicroseconds(20000);
+    delay(400);
+    if (sNumberOfSleeps == 4) {
+        Serial.println(F("Wait 5 seconds to force watchdog reset"));
+        wdt_enable(WDTO_2S); // Resets after 2.5 seconds and then every 100 ms if not wdt_disable();
+        delay(5000);
+    }
     digitalWrite(LED_PIN, LOW);
-    ADCSRA = 0; // disable ADC just before sleep -> saves 200 uA
-    sleepWithWatchdog(WDTO_4S, true); // Sleep 4 seconds
+    Serial.print(F("Sleep 2 seconds with watchdog reset sNumberOfSleeps="));
+    Serial.println(sNumberOfSleeps);
+    Serial.flush(); // Otherwise the USART interrupt will wake us up
+    sleepWithWatchdog(WDTO_2S, true); // Sleep 2 seconds
 }
 #else
-#error This source is only for ATTinies
-#endif
+#error This source is only for AVR
+#endif //defined(__AVR__)

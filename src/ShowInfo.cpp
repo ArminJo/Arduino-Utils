@@ -310,19 +310,41 @@ void Information(void) {
 #endif
 
     Serial.println(F("UTF-8 test:"));
-    Serial.println(F("    Micro µ"));
-    Serial.println(F("    Euro  €"));
-    Serial.println(F("    (c)   ©"));
+    Serial.println(F("    Micro ï¿½"));
+    Serial.println(F("    Euro  ï¿½"));
+    Serial.println(F("    (c)   ï¿½"));
 
     Serial.println(F("-----------"));
 #endif
 }
 
-#if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
+void printMCUSR(uint8_t aMCUSRContent) {
+#if defined(WDRF)
+    if (aMCUSRContent & (1 << WDRF)) {
+        Serial.print(F(" Watchdog"));
+    }
+#endif
+#if defined(BORF)
+    if (aMCUSRContent & (1 << BORF)) {
+        Serial.print(F(" Brownout"));
+    }
+#endif
+#if defined(EXTRF)
+    if (aMCUSRContent & (1 << EXTRF)) {
+        Serial.print(F(" Reset"));
+    }
+#endif
+#if defined(PORF)
+    if (aMCUSRContent & (1 << PORF)) {
+        Serial.print(F(" PowerOn"));
+    }
+#endif
+    Serial.println();
+}
 
 void printBODLevel(uint8_t aHighFuseBits) {
-
     Serial.print(F("Brown-out="));
+#if defined(FUSE_BODLEVEL2) && defined(FUSE_BODLEVEL1) && defined(FUSE_BODLEVEL0)
     uint8_t tBrownOutDetectionBits = aHighFuseBits & (~FUSE_BODLEVEL2 | ~FUSE_BODLEVEL1 | ~FUSE_BODLEVEL0 );
     switch (tBrownOutDetectionBits) {
     // 0-3 are reserved codes (for ATtiny)
@@ -341,28 +363,19 @@ void printBODLevel(uint8_t aHighFuseBits) {
     default:
         break;
     }
+#else
+    Serial.print(F("FUSE_BODLEVEL2 and FUSE_BODLEVEL1 and FUSE_BODLEVEL0 not defined"));
+#endif
     Serial.println();
 }
 
 void printBODLevel() {
+#if defined(GET_HIGH_FUSE_BITS)
     uint8_t tHighFuseBits = boot_lock_fuse_bits_get(GET_HIGH_FUSE_BITS);
     printBODLevel(tHighFuseBits);
-}
-
-void printMCUSR(uint8_t aMCUSRContent) {
-    if (aMCUSRContent & (1 << WDRF)) {
-        Serial.print(F(" Watchdog"));
-    }
-    if (aMCUSRContent & (1 << BORF)) {
-        Serial.print(F(" Brownout"));
-    }
-    if (aMCUSRContent & (1 << EXTRF)) {
-        Serial.print(F(" Reset"));
-    }
-    if (aMCUSRContent & (1 << PORF)) {
-        Serial.print(F(" PowerOn"));
-    }
-    Serial.println();
+#else
+    Serial.print(F("GET_HIGH_FUSE_BITS not defined"));
+#endif
 }
 
 /*
@@ -371,8 +384,8 @@ void printMCUSR(uint8_t aMCUSRContent) {
 void printFuses(void) {
     uint8_t tLowFuseBits = boot_lock_fuse_bits_get(GET_LOW_FUSE_BITS);
     Serial.println();
-    Serial.print(F("LowFuses="));
-    Serial.printlnHex(tLowFuseBits);
+    Serial.print(F("LowFuses=0x"));
+    Serial.println(tLowFuseBits, HEX);
 
     Serial.print(F("Clock divide by 8"));
     if (tLowFuseBits & ~FUSE_CKDIV8) {
@@ -449,8 +462,8 @@ void printFuses(void) {
     uint8_t tHighFuseBits = boot_lock_fuse_bits_get(GET_HIGH_FUSE_BITS);
     Serial.println();
     Serial.println();
-    Serial.print(F("HighFuses="));
-    Serial.printlnHex(tHighFuseBits);
+    Serial.print(F("HighFuses=0x"));
+    Serial.println(tHighFuseBits,HEX);
 
     Serial.print(F("Reset"));
     if (tHighFuseBits & ~FUSE_RSTDISBL) {
@@ -480,13 +493,15 @@ void printFuses(void) {
 
     uint8_t tExtFuseBits = boot_lock_fuse_bits_get(GET_EXTENDED_FUSE_BITS);
     Serial.println();
-    Serial.print(F("ExtFuses="));
-    Serial.printlnHex(tExtFuseBits);
+    Serial.print(F("ExtFuses=0x"));
+    Serial.println(tExtFuseBits,HEX);
+#if defined(FUSE_SELFPRGEN)
     Serial.print(F("Self programming"));
     if (tExtFuseBits & ~FUSE_SELFPRGEN) {
         Serial.print(F(" not"));
     }
     Serial.println(F(" enabled"));
+#endif
     Serial.println();
 }
 
@@ -712,7 +727,6 @@ void TimerRegisterDump(void) {
     Timer1RegisterDump();
     Timer2RegisterDump();
 }
-#endif
 #endif // AVR
 
 #endif // !defined(__AVR_ATmega32U4__)

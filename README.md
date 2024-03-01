@@ -33,26 +33,26 @@ Not yet available as Arduino library.
 <br/>
 
 # Table of content
-* [SimpleEMAFilters.hpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#simpleemafiltershpp)
-* [ADCUtils.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#adcutilscpp)
+* [SimpleEMAFilters](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#simpleemafilters)
+* [ADCUtils](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#adcutils)
 * [HCSR04](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#hcsr04)
-* [MeasureVoltageAndResistance.hpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#measurevoltageandresistancehpp)
-* [BlinkLed.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#blinkledcpp)
+* [MeasureVoltageAndResistance](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#measurevoltageandresistancehpp)
+* [BlinkLed](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#blinkled)
 * [ShowInfo](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#showinfo)
 * [HexDump](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#hexdump)
-* [AVRUtils.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#avrutilscpp)
-* [MillisUtils.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#millisutilscpp)
-* [DebugLevel.h](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#debuglevelh)
-* [ATtinyUtils.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#attinyutilscpp)
-* [AvrTracing.hpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#avrtracinghpp)
+* [AVRUtils](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#avrutils)
+* [MillisUtils](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#millisutils)
+* [DebugLevel](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#debuglevel)
+* [ATtinyUtils](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#attinyutils)
+* [AvrTracing](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#avrtracing)
 * [Utilities available as separate Arduino library](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#utilities-available-as-separate-arduino-library)
-  * [ATtinySerialOut.cpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#attinyserialoutcpp)
-  * [EasyButtonAtInt01.hpp](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#easybuttonatint01hpp)
+  * [ATtinySerialOut](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#attinyserialout)
+  * [EasyButtonAtInt01](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#easybuttonatint01)
   * [The very useful digitalWriteFast.h file based on the version from Watterott electronic.](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#the-very-useful-digitalwritefasth-file-based-on-the-version-from-watterott-electronic)
 * [Revision History](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#revision-history)
 * [CI](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#ci)
 
-# SimpleEMAFilters.hpp
+# SimpleEMAFilters
 An EMA (**Exponential Moving Average**) filter behaves like an RC lowpass filter with RC = SamplePeriod((1-alpha)/alpha) see [here](https://en.wikipedia.org/wiki/Low-pass_filter#Simple_infinite_impulse_response_filter).<br/>
 An EMA filter is implemented by e.g. the following statement:
 
@@ -170,7 +170,7 @@ Lowpass8_int32 += ((((int32_t) InputValue) << 16) - Lowpass8_int32) >> 8; // Fix
 - https://github.com/popcornell/Arduino-Multiplierless-EMA-filter
 - https://github.com/MakeMagazinDE/DigitaleFilter
 
-# ADCUtils.cpp
+# ADCUtils
 Fast and flexible ADC conversions. **Intelligent handling of delays for reference and channel switching**.
 - Functions for easy **oversampling**.
 - Function for easy getting the maximum value of measurements.
@@ -192,7 +192,7 @@ Fast and flexible ADC conversions. **Intelligent handling of delays for referenc
 4. All modules:<br/>
    Connect Trigger and Echo by a resistor of 4.7 k&ohm;.
 
-# MeasureVoltageAndResistance.hpp
+# MeasureVoltageAndResistance
 Measures voltage and resistance with **1 mV and 2 &ohm; resolution** at the lower end.<br/>
 First voltage is measured. If voltage is zero, then the unknown resistance to ground is measured using the 5 volt (VCC) supply with internal/series resistance of 10 k&ohm; or 100 k&ohm;.
 
@@ -201,7 +201,7 @@ First voltage is measured. If voltage is zero, then the unknown resistance to gr
 ### Fritzing schematics
 ![Fritzing schematics](extras/VoltAndOhmmeter_Schaltplan.png)
 
-# BlinkLed.cpp
+# BlinkLed
 - Class for blinking one ore more LED's in different fashions.
 
 # ShowInfo
@@ -216,7 +216,7 @@ First voltage is measured. If voltage is zero, then the unknown resistance to gr
 0x0020:  0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55  UUUUUUUUUUUUUUUU
 ```
 
-# AVRUtils.cpp
+# AVRUtils
 - Sleep and sleep with watchdog functions.
 - Available Ram, Heap / Stack memory display.
 
@@ -229,7 +229,7 @@ Stack used 20 of 7
 Currently available Heap=0
 ```
 
-# MillisUtils.cpp
+# MillisUtils
 Unifies millis() timer handling for Digispark, AttinyCore and Arduino cores.
 - Start, stop and modify milliseconds timer and value.
 - Functions to compensate `millis()` after long running tasks in `noIterrupt()` context like NeoPixel output, ADC buffer reading etc.
@@ -239,7 +239,7 @@ Unifies millis() timer handling for Digispark, AttinyCore and Arduino cores.
 - Propagating debug levels for development. Supports level `TRACE, DEBUG, INFO, WARN and ERROR`.
 - **Includes an explanation of semantics of these levels**.
 
-# ATtinyUtils.cpp
+# ATtinyUtils
 - `toneWithTimer1PWM()`.
 - `noToneWithTimer1PWM()`.
 - `isBODSFlagExistent()` -> checking for ATtiny85 revision C.
@@ -248,18 +248,18 @@ Unifies millis() timer handling for Digispark, AttinyCore and Arduino cores.
 It changes Digispark Bootloader clock settings to get the right CPU frequency and resets Digispark OCCAL tweak.
 Consider to use new [optimized Digispark core](https://github.com/ArminJo/DigistumpArduino) instead.
 
-# AvrTracing.hpp
+# AvrTracing
 **Tracing an Arduino program** by printing each program counter value after executing one instruction.
 
 # Utilities available as separate Arduino library
 
-## [ATtinySerialOut.cpp](https://github.com/ArminJo/ATtinySerialOut/src)
+## [ATtinySerialOut](https://github.com/ArminJo/ATtinySerialOut/src)
 Minimal bit-bang send serial
 - 115200 baud for 1/8/16 MHz ATtiny clock.
 The utility for serial output for ATtinies is contained in the [ATtinySerialOut library](https://github.com/ArminJo/ATtinySerialOut)
 available as an Arduino library.
 
-## [EasyButtonAtInt01.hpp](https://github.com/ArminJo/EasyButtonAtInt01/src)
+## [EasyButtonAtInt01](https://github.com/ArminJo/EasyButtonAtInt01/src)
 - Arduino library for handling push buttons just connected between ground and INT0 and / or INT1 pin.
 - No external pullup, **no polling needed**.
 The utility for easy button handling for ATmegas or ATtinies is contained in the [EasyButtonAtInt01 library](https://github.com/ArminJo/EasyButtonAtInt01)

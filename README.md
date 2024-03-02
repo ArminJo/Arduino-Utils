@@ -217,8 +217,9 @@ First voltage is measured. If voltage is zero, then the unknown resistance to gr
 ```
 
 # AVRUtils
-- Sleep and sleep with watchdog functions.
-- Available Ram, Heap / Stack memory display.
+- Sleep and delay/sleep with watchdog functions.
+- Computation and display of available Ram, Heap / Stack memory.
+- Display of watchdog reset reason in AVRUtilsDemo, which currently (3/2024) only works with [optiboot 8.1 bootloader](https://github.com/ArminJo/Arduino-Utils/tree/main/Optiboot_8_1).
 
 RAM starts of variables initialized with values != 0, followed by variables initialized with 0 and variables not initialized by using attribute `__attribute__((section(".noinit")))`. It ends with the heap and the stack.
 
@@ -228,6 +229,8 @@ Size of Data + BSS, Heap start, Stack end=2041
 Stack used 20 of 7
 Currently available Heap=0
 ```
+# Optiboot 8.1
+The [optiboot 8.1 bootloader](https://github.com/ArminJo/Arduino-Utils/tree/main/Optiboot_8_1) is required to determine the (watchdog) reset reason e.g. used in AVRUtilsDemo..
 
 # MillisUtils
 Unifies millis() timer handling for Digispark, AttinyCore and Arduino cores.

@@ -76,6 +76,13 @@ uint8_t sDummyArray[SIZE_OF_DUMMY_ARRAY] __attribute__((section(".noinit"))); //
 #endif
 
 uint8_t sMCUSRStored; // content of MCUSR register at startup
+#define WATCHDOG_INFO_STRING_SIZE   16
+/*
+ * A variable to hold the reset cause written by the main program
+ * It must not be overwritten by the initialization code after a reset.
+ * avr-gcc provides this via the ".noinit" section.
+ */
+char sWatchdogResetInfoString[WATCHDOG_INFO_STRING_SIZE] __attribute__ ((section(".noinit")));
 
 // Helper macro for getting a macro definition as string
 #define STR_HELPER(x) #x
@@ -103,6 +110,11 @@ void setup() {
     initTXPin();
 #else
 
+    /*
+     * This currently (3/2024) only works with optiboot 8.1 bootloader.
+     * https://github.com/Optiboot/optiboot/blob/master/optiboot/bootloaders/optiboot/optiboot.c#L243
+     * The standard Arduino bootloader overwrites MCUSR with 0 :-(.
+     */
     sMCUSRStored = MCUSR; // content of MCUSR register at startup
     MCUSR = 0;
     wdt_disable();
@@ -123,6 +135,12 @@ void setup() {
     Serial.print(sMCUSRStored, HEX);
     Serial.print(F(" => Boot reason is"));
     printMCUSR(sMCUSRStored);
+    if (sMCUSRStored & (1 << WDRF)) {
+        Serial.println(sWatchdogResetInfoString);
+    } else {
+        strncpy(sWatchdogResetInfoString, "during setup", WATCHDOG_INFO_STRING_SIZE - 1);
+        sWatchdogResetInfoString[WATCHDOG_INFO_STRING_SIZE - 1] = '\0'; // Terminate any string later copied with strncpy(..., ..., WATCHDOG_INFO_STRING_SIZE - 1);
+    }
 
     printBODLevel();
 
@@ -185,9 +203,11 @@ void loop() {
     delay(400);
     if (sNumberOfSleeps == 4) {
         Serial.println(F("Wait 5 seconds to force watchdog reset"));
-        wdt_enable(WDTO_2S); // Resets after 2.5 seconds and then every 100 ms if not wdt_disable();
+        strncpy(sWatchdogResetInfoString, "4. loop", WATCHDOG_INFO_STRING_SIZE - 1);
+        wdt_enable(WDTO_2S); // Resets after 2 seconds if wdt_disable() is not called before;
         delay(5000);
     }
+    strncpy(sWatchdogResetInfoString, "unknown reason", WATCHDOG_INFO_STRING_SIZE - 1);
     digitalWrite(LED_PIN, LOW);
     Serial.print(F("Sleep 2 seconds with watchdog reset sNumberOfSleeps="));
     Serial.println(sNumberOfSleeps);

@@ -50,21 +50,13 @@
     || defined(__AVR_ATtiny88__)
 #  define CODE_FOR_ATTINY
 #endif
-#if defined(CODE_FOR_ATTINY)
-#include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
-#else
 
-//#define SIZE_OF_DUMMY_ARRAY     1800    // Stack runs into data
-//#define SIZE_OF_DUMMY_ARRAY     1700    // Stack is OK, but no heap is available
-#define SIZE_OF_DUMMY_ARRAY     1600    // Stack is OK, and small heap is available
-uint8_t sDummyArray[SIZE_OF_DUMMY_ARRAY] __attribute__((section(".noinit"))); // Place it at end of BSS to be first overwritten by stack.
-#endif
-
-#define VERSION_EXAMPLE "1.0"
+#define VERSION_EXAMPLE "1.1"
 
 #define TONE_OUT_PIN 4
 
 #if defined(CODE_FOR_ATTINY)
+#include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
 #define LED_PIN  PB1
 // Pin 1 has an LED connected on my Digispark board.
 #  if (LED_PIN == TX_PIN)
@@ -72,15 +64,24 @@ uint8_t sDummyArray[SIZE_OF_DUMMY_ARRAY] __attribute__((section(".noinit"))); //
 #  endif
 
 #else
+
+//#define SIZE_OF_DUMMY_ARRAY     1800    // Stack runs into data
+//#define SIZE_OF_DUMMY_ARRAY     1700    // Stack is OK, but no heap is available
+#define SIZE_OF_DUMMY_ARRAY     0x600    // 1536 Stack is OK, and small heap is available
+uint8_t sDummyArray[SIZE_OF_DUMMY_ARRAY] __attribute__((section(".noinit"))); // Place it at end of BSS to be first overwritten by stack.
+
 #define LED_PIN  LED_BUILTIN
 #endif
 
 uint8_t sMCUSRStored; // content of MCUSR register at startup
+
 #define WATCHDOG_INFO_STRING_SIZE   16
 /*
  * A variable to hold the reset cause written by the main program
  * It must not be overwritten by the initialization code after a reset.
  * avr-gcc provides this via the ".noinit" section.
+ *
+ * Independent of order in file, sDummyArray is allocated lower than sWatchdogResetInfoString :-(
  */
 char sWatchdogResetInfoString[WATCHDOG_INFO_STRING_SIZE] __attribute__ ((section(".noinit")));
 
@@ -108,6 +109,9 @@ void setup() {
      * Initialize the serial pin as an output for Serial.print like debugging
      */
     initTXPin();
+    // Just to know which program is running on my Arduino
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
+    Serial.println();
 #else
 
     /*
@@ -122,34 +126,48 @@ void setup() {
     for (int i = 0; i < SIZE_OF_DUMMY_ARRAY; ++i) {
         sDummyArray[i] = 0; // Mark array with 0 to detect overwriting by StackFreeMeasurement
     }
-    initStackFreeMeasurement();
 
     Serial.begin(115200);
-
-#endif // defined(CODE_FOR_ATTINY)
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
-    Serial.println();
+    printBaseRAMData(&Serial);
+    Serial.flush();
+
+    initStackFreeMeasurement();
+
+#endif // defined(CODE_FOR_ATTINY)
+
+    Serial.flush();
 
     Serial.print(F("sMCUSR=0x"));
     Serial.print(sMCUSRStored, HEX);
-    Serial.print(F(" => Boot reason is"));
-    printMCUSR(sMCUSRStored);
+    if (sMCUSRStored != 0) {
+        Serial.print(F(" => Boot reason is"));
+        printMCUSR(sMCUSRStored);
+    }
+    Serial.println();
+
     if (sMCUSRStored & (1 << WDRF)) {
         Serial.println(sWatchdogResetInfoString);
     } else {
         strncpy(sWatchdogResetInfoString, "during setup", WATCHDOG_INFO_STRING_SIZE - 1);
         sWatchdogResetInfoString[WATCHDOG_INFO_STRING_SIZE - 1] = '\0'; // Terminate any string later copied with strncpy(..., ..., WATCHDOG_INFO_STRING_SIZE - 1);
     }
+    Serial.flush();
 
     printBODLevel();
+    Serial.flush();
 
     /*
      * Prints to avoid optimizing away the sDummyArray, which is first overwritten by stack.
      */
-    Serial.print(F("sDummyArray[1000]=0x"));
-    Serial.println(sDummyArray[1000], HEX);
-    Serial.println(F("DummyArray size=" STR(SIZE_OF_DUMMY_ARRAY)));
+    sDummyArray[SIZE_OF_DUMMY_ARRAY - 1] = 0x42;
+    Serial.print(F("DummyArray size=" STR(SIZE_OF_DUMMY_ARRAY)));
+    Serial.print(F(", &DummyArray["));
+    Serial.print(SIZE_OF_DUMMY_ARRAY - 1);
+    Serial.print(F("]=0x"));
+    Serial.println((uint16_t) &sDummyArray[SIZE_OF_DUMMY_ARRAY - 1], HEX);
+    Serial.flush();
 
     pinMode(LED_PIN, OUTPUT);
 
@@ -165,17 +183,29 @@ void setup() {
     delay(400);
 
     Serial.println();
-    printRAMInfo(&Serial);
-    printStackUnusedAndUsedBytes(&Serial);
 
-    Serial.println();
+    printRAMInfo(&Serial);
+    Serial.print(F("getStackMaxUsedSize="));
+    Serial.println(getStackMaxUsedSize());
 
     Serial.println(F("Dump stack / end of RAM"));
-    printMemoryHexDump((uint8_t*) (RAMEND - 256) + 1, 256);
+    printMemoryHexDump((uint8_t*) (RAMEND - 288) + 1, 288);
+    printRAMInfo(&Serial);
 
     Serial.println();
-    printStackUsedBytes(&Serial);
-    Serial.println();
+
+    /*
+     * Test calloc sizes
+     */
+    testCallocSizesAndPrint(&Serial);
+
+    printBaseRAMData(&Serial);
+    printRAMInfo(&Serial);
+    Serial.print(F("getStackMaxUsedSize="));
+    Serial.println(getStackMaxUsedSize()); // test this function, it works different from function used in printRAMInfo
+
+    Serial.println(F("Dump stack / end of RAM"));
+    printMemoryHexDump((uint8_t*) (RAMEND - 288) + 1, 288);
 
 //}
 

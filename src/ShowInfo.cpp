@@ -76,24 +76,6 @@ float GetTemp(void) {
     return (t);
 }
 
-// Helper function for free ram.
-//   With use of http://playground.arduino.cc/Code/AvailableMemory
-//
-int freeRam(void) {
-    extern unsigned int __heap_start;
-    extern void *__brkval;
-
-    int free_memory;
-    int stack_here;
-
-    if (__brkval == 0)
-        free_memory = (int) &stack_here - (int) &__heap_start;
-    else
-        free_memory = (int) &stack_here - (int) __brkval;
-
-    return (free_memory);
-}
-
 // Helper function for sketch size.
 // The sketch size is runtime calculated.
 // From user "Coding Badly" in his post:
@@ -114,7 +96,6 @@ unsigned long sketchSize(void) {
 
 void Information(void) {
 #if !defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
-    int i, j;
     int data1, data2, data3, data4;
     unsigned long ul;
     float percentage;
@@ -129,17 +110,6 @@ void Information(void) {
     Serial.print(ul, DEC);
     Serial.print(F(" ("));
     percentage = (float) ul / ((float) FLASHEND + 1.0) * 100.0;
-    Serial.print(percentage, 0);
-    Serial.println(F("%)"));
-
-    Serial.print(F("free RAM    = "));
-    i = freeRam();
-    Serial.println(i, DEC);
-    Serial.print(F("RAM used    = "));
-    j = (RAMEND + 1) - i;
-    Serial.print(j, DEC);
-    Serial.print(F(" ("));
-    percentage = (float) j / ((float) RAMEND + 1.0) * 100.0;
     Serial.print(percentage, 0);
     Serial.println(F("%)"));
 #endif

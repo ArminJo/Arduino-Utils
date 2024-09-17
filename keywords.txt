@@ -31,7 +31,7 @@ readADCChannel	KEYWORD2
 readADCChannelWithReference	KEYWORD2
 readADCChannelWithOversample	KEYWORD2
 readADCChannelWithReferenceOversample	KEYWORD2
-readADCChannelWithReferenceMultiSamples	KEYWORD2
+readADCChannelMultiSamplesWithReference	KEYWORD2
 readADCChannelWithReferenceMax	KEYWORD2
 readADCChannelWithReferenceMaxMicros	KEYWORD2
 readUntil4ConsecutiveValuesAreEqual	KEYWORD2
@@ -59,20 +59,20 @@ initPeriodicSleepWithWatchdog	LITERAL1
 computeSleepMillis	LITERAL1
 sleepWithWatchdog	LITERAL1
 
-getHeapStart	LITERAL1
-getCurrentFreeHeapOrStack	LITERAL1
-getCurrentAvailableHeap	LITERAL1
-printHeapStart	LITERAL1
+getAvailableHeapStart	LITERAL1
+getCurrentAvailableStack	LITERAL1
+getCurrentAvailableHeapSize	LITERAL1
+printAvailableHeapStart	LITERAL1
 printCurrentFreeHeap	LITERAL1
 printCurrentAvailableHeap	LITERAL1
 
 initStackFreeMeasurement	LITERAL1
 getStackUnusedBytes	LITERAL1
-getStackUsedBytes	LITERAL1
-getStackUnusedAndUsedBytes	LITERAL1
-printStackUsedBytes	LITERAL1
-printStackUnusedAndUsedBytes	LITERAL1
-printStackUnusedAndUsedBytesIfChanged	LITERAL1
+getStackMaxUsedBytes	LITERAL1
+getStackUnusedAndMaxUsedBytes	LITERAL1
+printStackMaxUsedBytes	LITERAL1
+printStackUnusedAndMaxUsedBytes	LITERAL1
+printStackUnusedAndMaxUsedBytesIfChanged	LITERAL1
 printRAMInfo	LITERAL1
 
 isAddressInRAM	LITERAL1

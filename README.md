@@ -283,9 +283,14 @@ If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easi
 
 # Revision History
 
+### Version 1.2.0
+- Updated AVRUtils, ADCUtils, HexDump and ShowInfo.
+- Added Optiboot 8.1.
+
 ### Version 1.1.0
 - SimpleEMAFilters: Added "State Variable" / Biquad and double and triple Lowpass filters.
 - ADCUtils: Renamed `*VoltageCheck*()` to `*VCCCheck*()`, `setADCMultiplexerAndReferenceForNextConversion()` to `setADCChannelAndReferenceForNextConversion()` and changed signature of `readUntil4ConsecutiveValuesAreEqual()`.
+- Renamed getTemperature* to getCPUTemperature*.
 - Miscellaneous renamings and improvements.
 - Added `float` to LongUnion.
 - Added `printRAMInfo()` in AVRUtils.

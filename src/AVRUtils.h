@@ -20,10 +20,13 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
+
+#include "Arduino.h"
+
+#if defined(__AVR__) && defined (SPMCSR) && !(defined(__AVR_ATtiny1616__)  || defined(__AVR_ATtiny3216__) || defined(__AVR_ATtiny3217__))
 #ifndef _AVR_UTILS_H
 #define _AVR_UTILS_H
 
-#if defined(__AVR__)
 #include <stdint.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
@@ -94,5 +97,5 @@ void reset__malloc_margin();
 
 void testCallocSizesAndPrint(Print *aSerial);
 
-#endif //  defined(__AVR__)
 #endif // _AVR_UTILS_H
+#endif //  defined(__AVR__)

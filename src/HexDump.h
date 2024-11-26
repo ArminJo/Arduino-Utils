@@ -28,10 +28,19 @@
 
 #define _16_BYTES_PER_LINE  16
 
-void printBytePaddedHex(uint8_t aHexValueToPrint);
-void printWordPaddedHex(uint16_t aHexValueToPrint);
+#define HEX_DUMP_FORMAT_16_BIT_ABSOLUTE_ADDRESS 0x00 // Print 16 bit absolute address
+#define HEX_DUMP_FORMAT_NO_ADDRESS_AT_ALL       0x01 // Bit 0: else print
+#define HEX_DUMP_FORMAT_RELATIVE_ADDRESS        0x02 // Bit 1: else absolute address
+#define HEX_DUMP_FORMAT_8_BIT_ADDRESS           0x04 // Bit 2: else 16 bit Address
+#define HEX_DUMP_FORMAT_ASCII_VALUES            0x08 // default
+
+void printBufferHex(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);
 void printBufferHexDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);
 void printBufferHexAndASCIIDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);
-void printMemoryHexDump(uint8_t *aMemory, uint16_t aSizeOfMemoryToPrint, uint8_t aBytesPerLine = _16_BYTES_PER_LINE, bool aPrintAscii = true, bool aPrintShortAddress = false, bool aPrintRelativeAddress = false);
-
+void printMemoryHexNoASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint);
+void printStackDump(uint16_t aNumberOfBytesToPrint);
+void printMemoryHexDump(uint8_t *aMemory, uint16_t aSizeOfMemoryToPrint, uint8_t aBytesPerLine = _16_BYTES_PER_LINE,
+        uint8_t aFormatFlags = HEX_DUMP_FORMAT_ASCII_VALUES);
+void printBytePaddedHex(uint8_t aHexValueToPrint);
+void printWordPaddedHex(uint16_t aHexValueToPrint);
 #endif // _HEX_DUMP_H

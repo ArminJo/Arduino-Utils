@@ -42,23 +42,54 @@
 void printBufferHex(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);
 void printBufferHexDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);
 void printBufferHexAndASCIIDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);
+void printMemoryHexNoASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint);
+void printStackDump(uint16_t aNumberOfBytesToPrint);
 void printMemoryHexDump(uint8_t *aMemory, uint16_t aSizeOfMemoryToPrint, uint8_t aBytesPerLine = _16_BYTES_PER_LINE,
         uint8_t aFormatFlags = HEX_DUMP_FORMAT_ASCII_VALUES);
 void printBytePaddedHex(uint8_t aHexValueToPrint);
 void printWordPaddedHex(uint16_t aHexValueToPrint);
 /*
- * Print short address and hex bytes without ASCII representation
+ * Print no address and hex bytes without ASCII representation
  */
 void printBufferHex(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint) {
     printMemoryHexDump(aBufferAddress, aNumberOfBytesToPrint, _16_BYTES_PER_LINE, HEX_DUMP_FORMAT_NO_ADDRESS_AT_ALL);
 }
+/*
+ * Print short relative address and hex bytes without ASCII representation
+ */
 void printBufferHexDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint) {
     printMemoryHexDump(aBufferAddress, aNumberOfBytesToPrint, _16_BYTES_PER_LINE,
     HEX_DUMP_FORMAT_8_BIT_ADDRESS | HEX_DUMP_FORMAT_RELATIVE_ADDRESS);
 }
+/*
+ * Print short relative address and hex bytes without ASCII representation
+ */
 void printBufferHexAndASCIIDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint) {
     printMemoryHexDump(aBufferAddress, aNumberOfBytesToPrint, _16_BYTES_PER_LINE,
     HEX_DUMP_FORMAT_8_BIT_ADDRESS | HEX_DUMP_FORMAT_RELATIVE_ADDRESS | HEX_DUMP_FORMAT_ASCII_VALUES);
+}
+
+/*
+ * Print 16 bit address and hex bytes with ASCII representation
+ */
+void printMemoryHexNoASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint) {
+    printMemoryHexDump(aMemoryAddress, aNumberOfBytesToPrint, _16_BYTES_PER_LINE, HEX_DUMP_FORMAT_16_BIT_ABSOLUTE_ADDRESS);
+}
+
+/*
+ * Print 16 bit address and hex bytes ending at stack start
+ */
+void printStackDump(uint16_t aNumberOfBytesToPrint) {
+    uint8_t *tMemoryAddress = (uint8_t*) ((RAMEND + 1) - aNumberOfBytesToPrint);
+    printMemoryHexDump(tMemoryAddress, aNumberOfBytesToPrint, _16_BYTES_PER_LINE, HEX_DUMP_FORMAT_16_BIT_ABSOLUTE_ADDRESS);
+}
+
+/*
+ * Print 16 bit address and hex bytes with ASCII representation
+ * like printMemoryHexDump(aMemoryAddress, aNumberOfBytesToPrint), because of default parameter
+ */
+void printMemoryHexAndASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint) {
+    printMemoryHexDump(aMemoryAddress, aNumberOfBytesToPrint, _16_BYTES_PER_LINE, HEX_DUMP_FORMAT_ASCII_VALUES);
 }
 /**
  * Prints lines of memory content
@@ -111,7 +142,7 @@ void printMemoryHexDump(uint8_t *aMemory, uint16_t aNumberOfBytesToPrint, uint8_
                     uint8_t tCharacterToPrint = aMemory[tIndex + i];
 //            if(isalnum(tIndex+i)){ // requires 40 bytes more program space
                     if (' ' <= tCharacterToPrint && tCharacterToPrint <= '~') {
-                        Serial.print((char)tCharacterToPrint);
+                        Serial.print((char) tCharacterToPrint);
                     } else if (tCharacterToPrint != 0x00 && tCharacterToPrint != 0xFF) {
                         // for non printable characters except 0 and FF
                         Serial.print('.');

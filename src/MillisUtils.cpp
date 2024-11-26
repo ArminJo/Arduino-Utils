@@ -41,7 +41,7 @@
 void delayAndCallFunctionEveryMillis(unsigned int aDelayMillis, void (*aDelayCallback)(void)) {
     uint32_t tStartMillis = millis();
     do {
-        if (aDelayCallback != NULL) {
+        if (aDelayCallback != nullptr) {
             aDelayCallback();
         }
         delay(1);
@@ -55,6 +55,7 @@ void addToMillis(uint16_t aMillisToAdd) {
     timer0_millis += aMillisToAdd;
 }
 
+#if (defined(TIMSK) && defined(TOIE)) || (defined(TIMSK0) && defined(TOIE0))
 /*
  * disable Timer0 (millis()) overflow interrupt
  * since the loop last exactly a multiple of 1024 micros, add a few statements between disabling and enabling
@@ -90,6 +91,7 @@ void enableMillisInterrupt(uint16_t aMillisToAddForCompensation) {
 #endif
 }
 
+#endif // (defined(TIMSK) && defined(TOIE)) || (defined(TIMSK0) && defined(TOIE0))
 #endif //  defined(__AVR__)
 
 #if ! defined(TEENSYDUINO)

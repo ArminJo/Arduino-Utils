@@ -208,7 +208,15 @@ First voltage is measured. If voltage is zero, then the unknown resistance to gr
 - Serial.print display of timer and other peripheral and system registers (to be extended :-)).
 
 # HexDump
-- Creates hex memory dumps on serial output.
+- Creates hex memory and stack dumps on serial output.
+
+void printBufferHex(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);     // Prints no address and hex bytes without ASCII representation.
+void printBufferHexDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint); // Prints short relative address and hex bytes without ASCII representation.
+void printBufferHexAndASCIIDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint); // Prints short relative address and hex bytes without ASCII representation.
+void printMemoryHexNoASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint);  // Prints 16 bit address and hex bytes with ASCII representation.
+void printMemoryHexAndASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint); // Prints 16 bit address and hex bytes with ASCII representation.
+void printStackMemory(uint16_t aNumberOfBytesToPrint); // Prints 16 bit address and hex bytes ending at top of stack / RAM end.
+void printStackDump(); // Prints 16 bit address and hex bytes starting at current stackpointer and ending at ending at top of stack / RAM end.
 
 ```
 0x0000:  0xFF 0x81 0x82 0x00 0x08 0x02 0x00 0x27 0xFF 0xFF 0x0E 0xB3 0x81 0xFC 0x9B 0x47   .. .. '  .....G

@@ -84,6 +84,7 @@ uint8_t sMCUSRStored; // content of MCUSR register at startup
  * Independent of order in file, sDummyArray is allocated lower than sWatchdogResetInfoString :-(
  */
 char sWatchdogResetInfoString[WATCHDOG_INFO_STRING_SIZE] __attribute__ ((section(".noinit")));
+volatile uint16_t sNumberOfSleeps = 0;
 
 // Helper macro for getting a macro definition as string
 #define STR_HELPER(x) #x
@@ -185,11 +186,10 @@ void setup() {
     Serial.println();
 
     printRAMInfo(&Serial);
-    Serial.print(F("getStackMaxUsedSize="));
-    Serial.println(getStackMaxUsedSize());
+    printStackMaxUsedAndUnusedSizes(&Serial);
 
-    Serial.println(F("Dump stack / end of RAM"));
-    printMemoryHexDump((uint8_t*) (RAMEND - 288) + 1, 288);
+    Serial.println(F("Dump 288 bytes of stack / end of RAM"));
+    printStackMemory(288);
     printRAMInfo(&Serial);
 
     Serial.println();
@@ -201,13 +201,13 @@ void setup() {
 
     printBaseRAMData(&Serial);
     printRAMInfo(&Serial);
-    Serial.print(F("getStackMaxUsedSize="));
-    Serial.println(getStackMaxUsedSize()); // test this function, it works different from function used in printRAMInfo
+    printStackMaxUsedAndUnusedSizes(&Serial); // test this function, it works different from function used in printRAMInfo
 
-    Serial.println(F("Dump stack / end of RAM"));
-    printMemoryHexDump((uint8_t*) (RAMEND - 288) + 1, 288);
+    Serial.println(F("Dump current stack"));
+    printStackDump();
 
-//}
+    Serial.println(F("Show return address for current function \"setup()\""));
+    Serial.println((uint16_t)__builtin_return_address(0), HEX);
 
     /*
      * init sleep mode and wakeup period
@@ -244,6 +244,14 @@ void loop() {
     Serial.flush(); // Otherwise the USART interrupt will wake us up
     sleepWithWatchdog(WDTO_2S, true); // Sleep 2 seconds
 }
+
+/*
+ * This interrupt wakes up the cpu from sleep
+ */
+ISR(WDT_vect) {
+    sNumberOfSleeps++;
+}
+
 #else
 #error This source is only for AVR
 #endif //defined(__AVR__)

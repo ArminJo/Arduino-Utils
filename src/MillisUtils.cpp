@@ -147,13 +147,13 @@ void speedTestWith1kCalls(Print *aSerial, void (*aFunctionUnderTest)(void)) {
     uint32_t tMillisRequired = millis() - tMillisStart;
     aSerial->print(F("Function call takes "));
     if (tMillisRequired > 1000000) {
-        Serial.print(tMillisRequired / 1000);
-        Serial.print(",");
-        Serial.print((tMillisRequired % 1000) / 100);
-        Serial.print(F(" milli"));
+        aSerial->print(tMillisRequired / 1000);
+        aSerial->print(",");
+        aSerial->print((tMillisRequired % 1000) / 100);
+        aSerial->print(F(" milli"));
     } else {
-        Serial.print(tMillisRequired);
-        Serial.print(F(" micro"));
+        aSerial->print(tMillisRequired);
+        aSerial->print(F(" micro"));
     }
     aSerial->println(F(" seconds."));
 }

@@ -36,7 +36,7 @@ Not yet available as Arduino library.
 * [SimpleEMAFilters](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#simpleemafilters)
 * [ADCUtils](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#adcutils)
 * [HCSR04](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#hcsr04)
-* [MeasureVoltageAndResistance](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#measurevoltageandresistancehpp)
+* [MeasureVoltageAndResistance](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#measurevoltageandresistance)
 * [BlinkLed](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#blinkled)
 * [ShowInfo](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#showinfo)
 * [HexDump](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#hexdump)

@@ -5,7 +5,7 @@
  *  First voltage is measured.
  *  If voltage is zero, then resistance to ground is measured using 5 volt (VCC) and 10 kOhm or 100 kOhm supply.
  *
- *  Copyright (C) 2021  Armin Joachimsmeyer
+ *  Copyright (C) 2021-2025  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -25,43 +25,9 @@
  *
  */
 
-/*
- *  SCHEMATIC
- *            +----o A3  open/VCC (for R measurement) | open (for U measurement)
- *            |
- *            -
- *           | |
- *           | | R3 (10 kOhm)
- *           | |
- *            -
- *            |     _____
- * Input <----+----|_____|---o  A1 input (for R measurement) | open (for U measurement)
- *   ^        |     100 k - just to protect the pin
- *   |        -
- *   |       | |
- *   |       | | R1 (100 kOhm)
- *   |       | |
- *   -        -
- *  | |       |
- *  | | Rx    +---o A0  VCC(R) | input(U)
- *  | |       |
- *   -        -
- *   |       | |
- *   o GND   | | R2 (22k)
- *           | |
- *            -
- *            |
- *            +---o A2  open(R) | GND(U)
- *
- *  The ratio of R1 to Rx is equal the Ratio of (1023 - x) to x
- *
- *  => The formula is: Rx/R1 = x / (1023-x)
- *      Rx = R1 * x / (1023-x)
- *
- */
 #include <Arduino.h>
 
-#define VERSION_EXAMPLE "1.2"
+#define VERSION_EXAMPLE "2.0"
 
 //#define NO_PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE
 
@@ -80,16 +46,10 @@
  * Imports and definitions for LCD
  */
 #if defined(USE_SERIAL_LCD)
-#  if defined(USE_SOFT_I2C_MASTER) // Must be declared globally. Saves 440 bytes
-#define I2C_HARDWARE 1 // use I2C Hardware
-#define I2C_PULLUP 1
-#define I2C_FASTMODE 1
-#include "SoftI2CMaster.h"
-#  endif
-#include <LiquidCrystal_I2C.h> // Use an up to date library version which has the init method
+#include "LiquidCrystal_I2C.hpp" // Here we use an enhanced version, which supports SoftI2CMaster
 #endif
 #if defined(USE_PARALLEL_LCD)
-#include <LiquidCrystal.h>
+#include "LiquidCrystal.h"
 #endif
 
 #if defined(USE_1602_LCD)
@@ -117,7 +77,9 @@ LiquidCrystal_I2C myLCD(0x27, LCD_COLUMNS, LCD_ROWS);  // set the LCD address to
 LiquidCrystal myLCD(4, 5, 6, 7, 8, 9);
 #endif
 
-// Include it after LCD settings, it requires the macros USE_LCD and USE_2004_LCD to be set
+// Include it after LCD settings, it requires the macros below and the macros USE_LCD and USE_2004_LCD to be set
+#define PRINT_OF_RESISTOR_MEASURMENT_VOLTAGE
+#define PRINT_OF_VCC
 #include "MeasureVoltageAndResistance.hpp"
 
 #define STR_HELPER(x) #x
@@ -137,10 +99,8 @@ void setup() {
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
-    printVoltageAndResistanceUsage();
-
     /*
-     * LCD initialization
+     * LCD initialization, which may reduce VCC
      */
 #if defined(USE_SERIAL_LCD)
     myLCD.init();
@@ -151,11 +111,14 @@ void setup() {
     myLCD.begin(LCD_COLUMNS, LCD_ROWS);
 #endif
 
+    printVoltageAndResistanceUsage();
+
 #if defined(USE_SERIAL_LCD) || defined(USE_PARALLEL_LCD)
     myLCD.print(F("Volt+Ohm meter"));
     myLCD.setCursor(0, 1);
     myLCD.print(F(VERSION_EXAMPLE " " __DATE__));
     delay(2000);
+    myLCD.clear();
 #endif
 
 }

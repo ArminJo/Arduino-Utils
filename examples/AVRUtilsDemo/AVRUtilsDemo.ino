@@ -57,6 +57,9 @@
 
 #if defined(CODE_FOR_ATTINY)
 #include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
+
+#define SIZE_OF_DUMMY_ARRAY     0x100    // small heap is available
+
 #define LED_PIN  PB1
 // Pin 1 has an LED connected on my Digispark board.
 #  if (LED_PIN == TX_PIN)
@@ -68,10 +71,10 @@
 //#define SIZE_OF_DUMMY_ARRAY     1800    // Stack runs into data
 //#define SIZE_OF_DUMMY_ARRAY     1700    // Stack is OK, but no heap is available
 #define SIZE_OF_DUMMY_ARRAY     0x600    // 1536 Stack is OK, and small heap is available
-uint8_t sDummyArray[SIZE_OF_DUMMY_ARRAY] __attribute__((section(".noinit"))); // Place it at end of BSS to be first overwritten by stack.
 
 #define LED_PIN  LED_BUILTIN
 #endif
+uint8_t sDummyArray[SIZE_OF_DUMMY_ARRAY] __attribute__((section(".noinit"))); // Place it at end of BSS to be first overwritten by stack.
 
 uint8_t sMCUSRStored; // content of MCUSR register at startup
 
@@ -185,6 +188,7 @@ void setup() {
 
     Serial.println();
 
+#if !defined(CODE_FOR_ATTINY)
     printRAMInfo(&Serial);
     printStackMaxUsedAndUnusedSizes(&Serial);
 
@@ -202,12 +206,13 @@ void setup() {
     printBaseRAMData(&Serial);
     printRAMInfo(&Serial);
     printStackMaxUsedAndUnusedSizes(&Serial); // test this function, it works different from function used in printRAMInfo
+#endif
 
     Serial.println(F("Dump current stack"));
     printStackDump();
 
     Serial.println(F("Show return address for current function \"setup()\""));
-    Serial.println((uint16_t)__builtin_return_address(0), HEX);
+    Serial.println((uint16_t) __builtin_return_address(0), HEX);
 
     /*
      * init sleep mode and wakeup period

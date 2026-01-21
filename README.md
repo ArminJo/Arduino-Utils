@@ -1,7 +1,8 @@
 <div align = center>
 
 # [ArduinoUtils](https://github.com/ArminJo/Arduino-Utils)
-My utility collection for Arduino
+My utility collection for Arduino<br/>
+Contains utilities for fast and flexible ADC conversions, Voltage and Resitance measurement, RAM, heap and stack info, Hex dumps, EMA filters etc.
 
 [![Badge License: GPLv3](https://img.shields.io/badge/License-GPLv3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
  &nbsp; &nbsp;
@@ -290,6 +291,9 @@ If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easi
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 # Revision History
+
+### Version 1.2.1
+- Improved Stack info, if stack is exhausted, added flush to HexDump, improved examples.
 
 ### Version 1.2.0
 - Updated AVRUtils, ADCUtils, HexDump and ShowInfo.

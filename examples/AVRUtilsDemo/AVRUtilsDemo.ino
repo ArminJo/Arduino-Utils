@@ -4,7 +4,7 @@
  *  Demo of 2 seconds sleep with watchdog
  *  Demo of printRAMInfo() and printStackUnusedAndUsedBytes ()
  *
- *  Copyright (C) 2020-2024  Armin Joachimsmeyer
+ *  Copyright (C) 2020-2026  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -134,12 +134,17 @@ void setup() {
     Serial.begin(115200);
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
+
+    Serial.println();
+    Serial.println(F("Print base RAM data"));
     printBaseRAMData(&Serial);
     Serial.flush();
 
     initStackFreeMeasurement();
 
 #endif // defined(CODE_FOR_ATTINY)
+    Serial.println();
+    Serial.println(F("Print MCUSR, Brown-out level and dummy array info"));
 
     Serial.flush();
 
@@ -186,33 +191,40 @@ void setup() {
     tone(TONE_OUT_PIN, 2200, 400);
     delay(400);
 
-    Serial.println();
-
 #if !defined(CODE_FOR_ATTINY)
-    printRAMInfo(&Serial);
-    printStackMaxUsedAndUnusedSizes(&Serial);
+    Serial.println();
+    Serial.println(F("Print RAM and Stack info"));
+    printRAMAndStackInfo(&Serial);
 
+    Serial.println();
     Serial.println(F("Dump 288 bytes of stack / end of RAM"));
     printStackMemory(288);
-    printRAMInfo(&Serial);
 
     Serial.println();
+    Serial.println(F("Print RAM and Stack info, stack usage has increased"));
+    printRAMAndStackInfo(&Serial);
 
     /*
      * Test calloc sizes
      */
+    Serial.println();
+    Serial.println(F("Test calloc sizes"));
     testCallocSizesAndPrint(&Serial);
 
+    Serial.println();
+    Serial.println(F("Print base RAM data again"));
     printBaseRAMData(&Serial);
-    printRAMInfo(&Serial);
-    printStackMaxUsedAndUnusedSizes(&Serial); // test this function, it works different from function used in printRAMInfo
+    Serial.println();
+    Serial.println(F("Print RAM and Stack info again"));
+    printRAMAndStackInfo(&Serial);
 #endif
 
-    Serial.println(F("Dump current stack"));
+    Serial.println();
+    Serial.print(F("Dump current stack: "));
     printStackDump();
-
-    Serial.println(F("Show return address for current function \"setup()\""));
+    Serial.print(F("\"__builtin_return_address(0)\" yields the return address of the current function \"setup()\" =0x"));
     Serial.println((uint16_t) __builtin_return_address(0), HEX);
+    Serial.println();
 
     /*
      * init sleep mode and wakeup period
@@ -230,30 +242,43 @@ void setup() {
      * Otherwise ADC can NOT disabled by (ADCSRA = 0) anymore and always consumes 200 uA!
      */
 //    PRR = _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI); // Disable timer 0 and USI - has no effect on Power Down current
+    Serial.println(F("Start of loop:"));
+
 }
 
 void loop() {
 
     digitalWrite(LED_PIN, HIGH);
     delay(400);
-    if (sNumberOfSleeps == 4) {
-        Serial.println(F("Wait 5 seconds to force watchdog reset"));
+    if (sNumberOfSleeps >= 4) {
+        Serial.println(F("Wait 3 seconds to see timeout message after 2 seconds"));
+        initTimeoutWithWatchdog(WDTO_2S);
+        delay(3000);
+
+        Serial.println(F("Now wait 3 seconds to wait for watchdog reset after 2 seconds"));
+        Serial.println();
         strncpy(sWatchdogResetInfoString, "4. loop", WATCHDOG_INFO_STRING_SIZE - 1);
-        wdt_enable(WDTO_2S); // Resets after 2 seconds if wdt_disable() is not called before;
-        delay(5000);
+        wdt_enable(WDTO_2S); // Resets the CPU after 2 seconds. To avoid this you must call wdt_disable() or wdt_reset() before.
+        delay(3000);
+
+        Serial.println(F("We will never see this, because watchdog does a reset before!"));
     }
     strncpy(sWatchdogResetInfoString, "unknown reason", WATCHDOG_INFO_STRING_SIZE - 1);
     digitalWrite(LED_PIN, LOW);
-    Serial.print(F("Sleep 2 seconds with watchdog reset sNumberOfSleeps="));
+    Serial.print(F("Sleep 2 seconds with watchdog timer sNumberOfSleeps="));
     Serial.println(sNumberOfSleeps);
     Serial.flush(); // Otherwise the USART interrupt will wake us up
-    sleepWithWatchdog(WDTO_2S, true); // Sleep 2 seconds
+    sleepWithWatchdog(WDTO_2S, true); // Sleep 2 seconds, then continue with loop
 }
 
 /*
  * This interrupt wakes up the cpu from sleep
  */
 ISR(WDT_vect) {
+    if (sNumberOfSleeps >= 4) {
+        wdt_reset(); // restart watchdog time
+        Serial.println(F("Timeout detected!"));
+    }
     sNumberOfSleeps++;
 }
 

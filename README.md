@@ -33,7 +33,7 @@ Not yet available as Arduino library.
 
 <br/>
 
-# Table of content
+# Table of contents
 * [SimpleEMAFilters](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#simpleemafilters)
 * [ADCUtils](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#adcutils)
 * [HCSR04](https://github.com/ArminJo/Arduino-Utils?tab=readme-ov-file#hcsr04)
@@ -77,7 +77,7 @@ Simplified formula for small alpha is CutoffFrequency = (SampleFrequency / (2&pi
 - 1/32 -> 5.13 Hz (160 Hz / 31)
 - 1/256 -> 0.624 Hz (160 Hz / 255)
 
-Using the [more exact formula](https://github.com/MakeMagazinDE/DigitaleFilter/blob/main/Filter-Berechnungen.xlsx), alpha = 1 - e ^ -((2&pi; * CutoffFrequency) / SampleFrequency)  
+Using the [more exact formula](https://github.com/MakeMagazinDE/DigitaleFilter/blob/main/Filter-Berechnungen.xlsx), alpha = 1 - e ^ -((2&pi; * CutoffFrequency) / SampleFrequency)
 => CutoffFrequency = (-ln(1-alpha) * SampleFrequency) / 2&pi; we get the values:
 - 110 Hz
 - 46 Hz
@@ -291,6 +291,8 @@ If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easi
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 # Revision History
+
+- Renamed printRAMInfo to printRAMAndStackInfo.
 
 ### Version 1.2.1
 - Improved Stack info, if stack is exhausted, added flush to HexDump, improved examples.

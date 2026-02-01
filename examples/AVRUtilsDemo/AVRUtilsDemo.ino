@@ -2,7 +2,7 @@
  *  AVRUtilsDemo.cpp
  *
  *  Demo of 2 seconds sleep with watchdog
- *  Demo of printRAMInfo() and printStackUnusedAndUsedBytes ()
+ *  Demo of printRAMAndStackInfo() and printStackUnusedAndUsedBytes ()
  *
  *  Copyright (C) 2020-2026  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com

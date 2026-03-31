@@ -1,9 +1,31 @@
 /*
- *  EMAFilterTest.cpp
+ *  EMAFilterDemo.cpp
  *
  *  Generates a square wave with 4 frequencies or noise and prints filtered values
+ *  Frequencies are: 42, 21, 10.5, 5.2 Hz at a sample rate of 1 ms (or 84, 42 ... Hz at a sample rate of 0.5 ms and so on)
  *
- *  Copyright (C) 2020-2023  Armin Joachimsmeyer
+ *
+ * Available waveforms are:
+ * 0 Rectangle
+ * 1 Sine
+ * 2 Triangle
+ * 3 Sawtooth
+ * 4 Random
+ * 5 Rectangle with 1/4 amplitude
+ * 6 Sine with 1/4 amplitude
+ *
+ * Available filter sets are:
+ * 0 Significant filters
+ * 1 All Low Pass
+ * 2 Low and High Pass
+ * 3 Band Pass and Reject
+ * 4 Low Pass 1, 3, 5, 8
+ * 5 Low Pass 16 + 32
+ * 6 Higher Order Low Pass 16
+ * 7 Bi-Quad filters with Damping 0
+ *
+ *
+ *  Copyright (C) 2020-2026  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -26,7 +48,7 @@
 #include <Arduino.h>
 
 #define MEASURE_TIMING
-//#define TIMING_OUT_PIN  12
+#define TIMING_OUT_PIN  12
 #include "SimpleEMAFilters.hpp"
 
 #define INPUT_WAVEFORM_RECTANGLE    0
@@ -45,7 +67,18 @@
 //#define MAXIMUM_INPUT_VALUE 16385L // Here we get overflows for square wave at `InputValue - Lowpass3` while changing sign
 //#define MAXIMUM_INPUT_VALUE 16384L // Here we get overflows for square wave at `InputValue - Lowpass3` while changing from - to + value
 //#define MAXIMUM_INPUT_VALUE 16383L // The maximum value without overflows for square wave and fast 16 bit filters
-//#define MAXIMUM_INPUT_VALUE 20     // here we see clipping effects due to the limited resolution of the used 16 bit math - picture 2 in readme
+//#define MAXIMUM_INPUT_VALUE 25     // here we see clipping effects due to the limited resolution of the used 16 bit math - picture 2 in readme
+uint16_t sMaximumInputValue = MAXIMUM_INPUT_VALUE;
+
+uint8_t ReadFilterSelectionBCDValueFromPins();
+uint8_t ReadInputWaveformSelectionBCDValueFromPins();
+uint8_t sLastFilterSelection;
+uint8_t sLastInputWaveformSelection;
+uint16_t sLoopCount = 1;    // 0 (1 for first loop) to 499
+uint8_t sPeriodCount = 0;       // 0 to 4
+uint8_t sSamplesPerPeriod = INPUT_PERIOD_SAMPLES_START;  // 0 to INPUT_PERIOD_SAMPLES_START (200)
+uint8_t sSampleCount = 0;       // 0 to INPUT_PERIOD_SAMPLES_START (200)
+int16_t sInput;
 
 void setup() {
 
@@ -62,55 +95,33 @@ void setup() {
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
 
+    // Get initial values
+    sLastFilterSelection = ReadFilterSelectionBCDValueFromPins();
+    sLastInputWaveformSelection = ReadInputWaveformSelectionBCDValueFromPins();
+
+    doFiltersTimingTest(4711);
+    delayMicroseconds(100);
+    doFiltersTimingTest(-4711);
+
+    // Print caption for Arduino Plotter
+    printFiltersCaption(sLastFilterSelection);
+
+    resetFilters();
+//    int16_t tb = random(32000);
+//    for (int i = 0; i < 256; i+=31) {
+//        int16_t ta = i * 7;
+//        int32_t tc = ta * tb; // clipping!
+//        int32_t tc = (int32_t)ta * tb; // OK
+//        Serial.print(F("int16_t:"));
+//        Serial.print(ta);
+//        Serial.print(F(" * int16_t:"));
+//        Serial.print(tb);
+//        Serial.print(F(" = int32_t:"));
+//        Serial.println(tc);
+//    }
+
 //    Serial.println(F("START " __FILE__ "\r\nUsing library version " VERSION_SIMPLE_EMA_FILTERS " from " __DATE__));
-
 }
-
-uint8_t ReadFilterSelectionBCDValueFromPins() {
-    /*
-     * Read BCD values at pin 4,5,6 into variable
-     */
-    uint8_t tSelection = 0;
-    if (digitalRead(4) == LOW) {
-        tSelection += 1;
-    }
-    if (digitalRead(5) == LOW) {
-        tSelection += 2;
-    }
-    if (digitalRead(6) == LOW) {
-        tSelection += 4;
-    }
-    return tSelection;
-}
-
-uint8_t ReadInputWaveformSelectionBCDValueFromPins() {
-    /*
-     * Read BCD values at pin 7,8 into variable
-     */
-    uint8_t tSelection = 0;
-    if (digitalRead(7) == LOW) {
-        tSelection += 1;
-    }
-    if (digitalRead(8) == LOW) {
-        tSelection += 2;
-    }
-    if (digitalRead(9) == LOW) {
-        tSelection += 4;
-    }
-    if (tSelection > INPUT_WAVEFORM_MAX) {
-        tSelection = INPUT_WAVEFORM_RECTANGLE;
-    }
-    return tSelection;
-}
-
-uint8_t sOldFilterSelection = 42;
-uint8_t sOldInputWaveformSelection = 42;
-
-uint16_t sLoopCount;    // 0 (1 for first loop) to 499
-uint8_t sPeriodCount;       // 0 to 4
-uint8_t sSamplesPerPeriod;  // 0 to INPUT_PERIOD_SAMPLES_START (200)
-uint8_t sSampleCount;       // 0 to INPUT_PERIOD_SAMPLES_START (200)
-int16_t sInput;
 
 /*
  * Create a signal starting with a period of 24, which is equivalent to a frequency of 42 Hz for a 1 kHz sampling frequency.
@@ -123,13 +134,9 @@ void loop() {
      * Read BCD values at pin 4,5,6 into variable
      */
     uint8_t tFilterSelection = ReadFilterSelectionBCDValueFromPins();
-    if (sOldFilterSelection != tFilterSelection) {
-        if (sOldFilterSelection == 42) {
-            sLoopCount = 1;
-        } else {
-            sLoopCount = 0;
-        }
-        sOldFilterSelection = tFilterSelection;
+    if (sLastFilterSelection != tFilterSelection) {
+        sLoopCount = 0;
+        sLastFilterSelection = tFilterSelection;
 
         // Print caption for Arduino Plotter
         printFiltersCaption(tFilterSelection);
@@ -140,13 +147,9 @@ void loop() {
     }
 
     uint8_t tInputWaveformSelection = ReadInputWaveformSelectionBCDValueFromPins();
-    if (sOldInputWaveformSelection != tInputWaveformSelection) {
-        if (sOldInputWaveformSelection == 42) {
-            sLoopCount = 1;
-        } else {
-            sLoopCount = 0;
-        }
-        sOldInputWaveformSelection = tInputWaveformSelection;
+    if (sLastInputWaveformSelection != tInputWaveformSelection) {
+        sLoopCount = 0;
+        sLastInputWaveformSelection = tInputWaveformSelection;
         // Print caption for Arduino Plotter
         printFiltersCaption(tFilterSelection);
         resetFilters();
@@ -163,17 +166,18 @@ void loop() {
          */
         if (tInputWaveformSelection == INPUT_WAVEFORM_RECTANGLE) {
             if (sSampleCount < sSamplesPerPeriod / 2) {
-                sInput = MAXIMUM_INPUT_VALUE;
+                sInput = sMaximumInputValue;
             } else {
-                sInput = -MAXIMUM_INPUT_VALUE;
+                sInput = -sMaximumInputValue;
             }
 
         } else if (tInputWaveformSelection == INPUT_WAVEFORM_SINE) {
-            sInput = MAXIMUM_INPUT_VALUE * sin(((float) sSampleCount * TWO_PI) / sSamplesPerPeriod);
+            float tFactor = sin(((float) sSampleCount * TWO_PI) / sSamplesPerPeriod);
+            sInput = (float) sMaximumInputValue * tFactor;
 
         } else if (tInputWaveformSelection == INPUT_WAVEFORM_TRIANGLE) {
             int16_t tInput = sSampleCount % (sSamplesPerPeriod / 4);
-            tInput = ((MAXIMUM_INPUT_VALUE * tInput) / (sSamplesPerPeriod / 4)); // e.g 400 * x / 6
+            tInput = ((sMaximumInputValue * tInput) / (sSamplesPerPeriod / 4)); // e.g 400 * x / 6
 
             if (sSampleCount < sSamplesPerPeriod / 4) {
                 // First quarter (e.g. 0 to 5)
@@ -181,7 +185,7 @@ void loop() {
 
             } else if (sSampleCount < sSamplesPerPeriod / 2) {
                 // Second quarter (e.g. 6 to 11)
-                sInput = MAXIMUM_INPUT_VALUE - tInput;
+                sInput = sMaximumInputValue - tInput;
 
             } else if (sSampleCount < (sSamplesPerPeriod / 2 + sSamplesPerPeriod / 4)) {
                 // third quarter (e.g. 12 to 17)
@@ -189,21 +193,21 @@ void loop() {
 
             } else {
                 // forth quarter (e.g. 18 to 23)
-                sInput = tInput - MAXIMUM_INPUT_VALUE;
+                sInput = tInput - sMaximumInputValue;
             }
 
         } else if (tInputWaveformSelection == INPUT_WAVEFORM_SAWTOOTH) {
             int16_t tInput = sSampleCount % (sSamplesPerPeriod / 2);
-            tInput = ((MAXIMUM_INPUT_VALUE * (uint16_t) tInput) / (sSamplesPerPeriod / 2));
+            tInput = ((sMaximumInputValue * (uint16_t) tInput) / (sSamplesPerPeriod / 2));
             if (sSampleCount < sSamplesPerPeriod / 2) {
                 sInput = tInput;
             } else {
-                sInput = tInput - MAXIMUM_INPUT_VALUE;
+                sInput = tInput - sMaximumInputValue;
             }
 
         } else {
             // Random
-            sInput = random(MAXIMUM_INPUT_VALUE);
+            sInput = random(sMaximumInputValue * 2) - sMaximumInputValue;
         }
 
         /*
@@ -233,4 +237,62 @@ void loop() {
     }
 
     delay(100);
+}
+
+/*
+ * 0 Rectangle
+ * 1 Sine
+ * 2 Triangle
+ * 3 Sawtooth
+ * 4 Random
+ */
+uint8_t ReadFilterSelectionBCDValueFromPins() {
+    /*
+     * Read BCD values at pin 4,5,6 into variable
+     */
+    uint8_t tSelection = 0;
+    if (digitalRead(4) == LOW) {
+        tSelection += 1;
+    }
+    if (digitalRead(5) == LOW) {
+        tSelection += 2;
+    }
+    if (digitalRead(6) == LOW) {
+        tSelection += 4;
+    }
+    return tSelection;
+}
+
+/*
+ * 0 Significant filters
+ * 1 All Low Pass
+ * 2 Low and High Pass
+ * 3 Band Pass and Reject
+ * 4 Low Pass 1, 3, 5, 8
+ * 5 Low Pass 16 + 32
+ * 6 Higher Order Low Pass 16
+ * 7 Bi-Quad filters with Damping 0
+ */
+uint8_t ReadInputWaveformSelectionBCDValueFromPins() {
+    /*
+     * Read BCD values at pin 7,8 into variable
+     */
+    uint8_t tSelection = 0;
+    if (digitalRead(7) == LOW) {
+        tSelection += 1;
+    }
+    if (digitalRead(8) == LOW) {
+        tSelection += 2;
+    }
+    if (digitalRead(9) == LOW) {
+        tSelection += 4;
+    }
+    if (tSelection > INPUT_WAVEFORM_MAX) {
+        // use lower input value to show resolution dependent artifacts
+        sMaximumInputValue = MAXIMUM_INPUT_VALUE / 4;
+        tSelection -= INPUT_WAVEFORM_MAX + 1; // Wrap around for Waveform
+    } else {
+        sMaximumInputValue = MAXIMUM_INPUT_VALUE;
+    }
+    return tSelection;
 }

@@ -77,7 +77,7 @@ void setup() {
 }
 
 void loop() {
-    if (getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged(300, 100, &Serial)) {
+    if (getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged(300, 100, &Serial) != HCSR04_DISTANCE_NO_MEASUREMENT) {
         if (sUSDistanceCentimeter == DISTANCE_TIMEOUT_RESULT) {
             noTone(SPEAKER_PIN);
         } else if (sUSDistanceCentimeter > 0) {

@@ -1,7 +1,7 @@
 /*
  * SimpleEMAFilters.h
  *
- *  Copyright (C) 2020-2021  Armin Joachimsmeyer
+ *  Copyright (C) 2020-2026  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -26,12 +26,8 @@
 
 #include <stdint.h>
 
-// Überschlägige Frequenzberechnung bei 10kHz Samplingrate:
-// f = kf * 6,23 Hz
-// Mit kf = 1  (1/256 = "0,003906") beträgt die -3dB-Grenzfrequenz also 6,23 Hz,
-// mit kf = 10 (10/256 = "0,078") etwa 63 Hz,
-// mit kf = 20 (20/256 = "0,078") etwa 126 Hz usw.
-// kf-Werte über "0.5" = 128 sind wenig sinnvoll.
+void doLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue, uint8_t aAlpha_shift8);
+void doLowpass_int32_shift8(int32_t *aLowpassAccumulator_int32_shift8, int16_t aInputValue, uint8_t aAlpha_shift8);
 
 struct BiquadFilter16Struct {
     int16_t BiQuadLowpass = 0;

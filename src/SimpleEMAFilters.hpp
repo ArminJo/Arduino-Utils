@@ -96,6 +96,7 @@ int16_t sLowpass2;
 int16_t sLowpass3;
 int16_t sLowpass4;
 int16_t sLowpass5;
+int16_t sLowpass6;
 int16_t sDoubleLowpass3;
 int16_t sDoubleLowpass4;
 int16_t sDoubleLowpass5;
@@ -143,6 +144,7 @@ const char *FilterSelectionStringArray[8] { "SIGNIFICANT_FILTERS", "ALL_LOW_PASS
  **************************************************************************************************************/
 /*
  * Generic function with parameter aShiftValue which is the divisor exponent
+ * !!! This function is NOT slower than the LOWPASS functions with fixed shifts :-) !!!
  * Rounding is done by always adding a positive value before shifting, because shifted negative numbers are rounded towards -infinity
  * E.g. +13 to +15 >> 2 = 3 (rounded towards 0).  -13 to -15 >> 2 = -4 (rounded towards -infinity)
  * @param aShiftValue  Divisor exponent value i.e. >>2 = *1/4 = *1/2^2,   >>3 = *1/8 = *1/2^3
@@ -151,7 +153,19 @@ void doLowpassShift_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValu
     *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << (aShiftValue - 1))) >> aShiftValue;
 }
 
-// around 0.7 us slower than doLowpassShift_int16
+/**
+ * Around 0.7 us slower than doLowpassShift_int16
+ * @param aAlpha_shift8
+ * - 64 = >>2 -> 53 Hz @1kHz sampling rate
+ * - 32 = >>3 -> 22.7 Hz
+ * - 20 = >>3.7 ->  12.48 Hz
+ * - 16 = >>4 -> 10.6 Hz
+ * - 10 = >>4.7 ->  6.24 Hz
+ * -  8 = >>5 ->  5.13 Hz
+ * -  4 = >>6 ->  2.54 Hz
+ * -  2 = >>7 ->  1,26 Hz
+ * -  1 = >>8 ->  0.624 Hz
+ */
 void doLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue, uint8_t aAlpha_shift8) {
     *aLowpassAccumulator_int16 += (((int32_t) (aInputValue - *aLowpassAccumulator_int16) * aAlpha_shift8) + (aAlpha_shift8 / 2))
             >> 8;
@@ -182,10 +196,29 @@ void doTripleLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDoubleL
 /******************************************************
  * int32 functions with (24,8) fixed point accumulator
  ******************************************************/
+/**
+ * Formula for processing time is: 1.75 us + 0.44 us per shift. i.e. 2.63 us for >> 2 and 4.81 us for >> 7. 2.13 for >> 8
+ */
 void doLowpassShift_int32_shift8(int32_t *aLowpassAccumulator_int32_shift8, int16_t aInputValue, uint8_t aShiftValue) {
     *aLowpassAccumulator_int32_shift8 += ((((int32_t) aInputValue << 8) - *aLowpassAccumulator_int32_shift8)) >> aShiftValue;
 }
 
+/**
+ * 7.13 us
+ * @param aAlpha_shift8
+ * - 64 = >>2 -> 53 Hz @1kHz sampling rate
+ * - 32 = >>3 -> 22.7 Hz
+ * - 20 = >>3.7 ->  12.48 Hz
+ * - 16 = >>4 -> 10.6 Hz
+ * - 10 = >>4.7 ->  6.24 Hz
+ * -  8 = >>5 ->  5.13 Hz
+ * -  4 = >>6 ->  2.54 Hz
+ * -  2 = >>7 ->  1,26 Hz
+ * -  1 = >>8 ->  0.624 Hz
+ */
+#if defined(OPTIMIZE_WITH_INLINE_FUNCTIONS) // from 7.13 us down to 3.44 us to 4.75 us
+__attribute__((always_inline)) inline
+#endif
 void doLowpass_int32_shift8(int32_t *aLowpassAccumulator_int32_shift8, int16_t aInputValue, uint8_t aAlpha_shift8) {
     *aLowpassAccumulator_int32_shift8 += (((((int32_t) aInputValue << 8) - *aLowpassAccumulator_int32_shift8)) * aAlpha_shift8)
             >> 8;
@@ -255,6 +288,10 @@ void doLowpass1_int16(int16_t *aLowpassAccumulator_int16, uint16_t aInputValue) 
 void doLowpass2_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue) {
     *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << 1)) >> 2;
 }
+// int32 functions with (24,8) fixed point accumulator
+void doLowpass2_int32_shift8(int32_t *aLowpassAccumulator_int32_shift8, int16_t aInputValue) {
+    *aLowpassAccumulator_int32_shift8 += ((((int32_t) aInputValue << 8) - *aLowpassAccumulator_int32_shift8)) >> 2;
+}
 
 //alpha = 1/8, cutoff frequency 22.7 Hz @1kHz
 /*
@@ -318,6 +355,9 @@ void doLowpass8_float(float *aLowpassAccumulator_float, int16_t aInputValue) {
 /**********************************
  * Generic BIQUAD filter functions
  **********************************/
+#if defined(OPTIMIZE_WITH_INLINE_FUNCTIONS)  // from 13 us down to 8.5 us
+__attribute__((always_inline)) inline
+#endif
 void doBiquad_int16(struct BiquadFilter16Struct *BiquadFilter16Ptr, int16_t aInputValue) {
     BiquadFilter16Ptr->BiQuadHighpass = aInputValue
             - (((int32_t) BiquadFilter16Ptr->BiQuadBandpass * BiquadFilter16Ptr->DampingFactor_shift8) >> 8)
@@ -328,6 +368,9 @@ void doBiquad_int16(struct BiquadFilter16Struct *BiquadFilter16Ptr, int16_t aInp
     BiquadFilter16Ptr->BiQuadLowpass = BiquadFilter16Ptr->BiQuadLowpass
             + ((((int32_t) BiquadFilter16Ptr->BiQuadBandpass * BiquadFilter16Ptr->Alpha_shift8) + 128) >> 8); // LP = LP + (BP * FrequencyCoefficient)
 }
+#if defined(OPTIMIZE_WITH_INLINE_FUNCTIONS)  // from 21 us down to ?? us
+__attribute__((always_inline)) inline
+#endif
 void doBiquad_int32(struct BiquadFilter32Struct *BiquadFilter32Ptr, int16_t aInputValue) {
     BiquadFilter32Ptr->BiQuadHighpass_shift8 = ((int32_t) aInputValue << 8)
             - ((BiquadFilter32Ptr->BiQuadBandpass_shift8 * BiquadFilter32Ptr->DampingFactor_shift8) >> 8)
@@ -413,7 +456,7 @@ void doFiltersTimingTest(int16_t aInputValue) {
     timingPinLow();timingPinHigh();
     sLowpass2 += ((aInputValue - sLowpass2) + (1 << 1)) >> 2;   // 1.31 us, alpha = 0.25, cutoff frequency 53 Hz @1kHz
     timingPinLow();timingPinHigh();
-    doLowpass2_int16(&sLowpass2, aInputValue);
+    doLowpass2_int16(&sLowpass2, aInputValue);                  // 1.31 us
 
     timingPinLow();timingPinHigh();
     sLowpass3 += ((aInputValue - sLowpass3) + (1 << 2)) >> 3;   // 2.00 us, alpha = 0.125, cutoff frequency 22.7 Hz @1kHz
@@ -430,37 +473,8 @@ void doFiltersTimingTest(int16_t aInputValue) {
     timingPinLow();timingPinHigh();
     doLowpass5_int16(&sLowpass5, aInputValue);                  // 2.63 us
 
-    // To see if functions are slower, if they are not inlined
     timingPinLow();timingPinHigh();
-    doLowpass2_int16(&sLowpass2, aInputValue);                  // 1.31 us
-
-    /*
-     * 32 bit functions / fixed point
-     */
-    timingPinLow();
-    delayMicroseconds(5);
-    int32_t tInputValue32_shift8 = (int32_t) aInputValue << 8;
-    timingPinHigh();
-    sLowpass3_int32_shift8 += (tInputValue32_shift8 - sLowpass3_int32_shift8) >> 3; // 3.06 us
-    timingPinLow();timingPinHigh();
-    doLowpass3_int32_shift8(&sLowpass3_int32_shift8, aInputValue);                  // 3.06 us
-
-    timingPinLow();timingPinHigh();
-    sLowpass5_int32_shift8 += (tInputValue32_shift8 - sLowpass5_int32_shift8) >> 5; // 3.94 us
-    timingPinLow();timingPinHigh();
-    doLowpass5_int32_shift8(&sLowpass5_int32_shift8, aInputValue);                  // 3.94 us
-    timingPinLow();timingPinHigh();
-    sLowpass8_int32_shift8 += (tInputValue32_shift8 - sLowpass8_int32_shift8) >> 8; // 2.13 us
-
-    /*
-     * Float functions
-     */
-    timingPinLow();
-    delayMicroseconds(5);
-    timingPinHigh();
-    doLowpass5_float(&sLowpass5_float, aInputValue);    // 22.94 us | 28.56 us for 2. pass (negative input value?)
-    timingPinLow();timingPinHigh();
-    doLowpass8_float(&sLowpass8_float, aInputValue);    // 19,90 us | 25.19 us for 2. pass (negative input value?)
+    sLowpass6 += ((aInputValue - sLowpass5) + (1 << 5)) >> 6;   //  us
 
     /*
      * 16 bit generic functions
@@ -472,13 +486,37 @@ void doFiltersTimingTest(int16_t aInputValue) {
     timingPinLow();timingPinHigh();
     doLowpass_int16(&sLowpass2, aInputValue, 64);       // 2.06 us  - 64 = 1/4 = >>2
     timingPinLow();timingPinHigh();
-    doLowpassShift_int16(&sLowpass5, aInputValue, 5);   // 2.63 us
+    doLowpassShift_int16(&sLowpass5, aInputValue, 4);   // 2.31 us
     timingPinLow();timingPinHigh();
-    doLowpass_int16(&sLowpass5, aInputValue, 8);        // 3.38 us  - 8 = 1/32 = >>5
+    doLowpass_int16(&sLowpass5, aInputValue, 16);       //  us  - 16 = 1/16 = >>4
+    timingPinLow();timingPinHigh();
+    doLowpassShift_int16(&sLowpass5, aInputValue, 6);   //  us
+    timingPinLow();timingPinHigh();
+    doLowpass_int16(&sLowpass5, aInputValue, 4);        // us  - 4 = 1/64 = >>6
 
-    // To see if functions are slower, if they are not inlined
+    /*
+     * 32 bit functions / fixed point
+     */
+    timingPinLow();
+    delayMicroseconds(5);
+    int32_t tInputValue32_shift8 = (int32_t) aInputValue << 8;
+    timingPinHigh();
+    sLowpass2_int32_shift8 += (tInputValue32_shift8 - sLowpass2_int32_shift8) >> 2; // 2.63 us
     timingPinLow();timingPinHigh();
-    doLowpassShift_int16(&sLowpass2, aInputValue, 2);   // 1.31 us
+    doLowpass2_int32_shift8(&sLowpass2_int32_shift8, aInputValue);                  //  2.63us
+    timingPinLow();timingPinHigh();
+    sLowpass3_int32_shift8 += (tInputValue32_shift8 - sLowpass3_int32_shift8) >> 3; // 3.06 us
+    timingPinLow();timingPinHigh();
+    doLowpass3_int32_shift8(&sLowpass3_int32_shift8, aInputValue);                  // 3.06 us
+
+    timingPinLow();timingPinHigh();
+    sLowpass5_int32_shift8 += (tInputValue32_shift8 - sLowpass5_int32_shift8) >> 5; // 3.94 us
+    timingPinLow();timingPinHigh();
+    doLowpass5_int32_shift8(&sLowpass5_int32_shift8, aInputValue);                  // 3.94 us
+    timingPinLow();timingPinHigh();
+    sLowpass5_int32_shift8 += (tInputValue32_shift8 - sLowpass5_int32_shift8) >> 7; // 4.81 us
+    timingPinLow();timingPinHigh();
+    sLowpass8_int32_shift8 += (tInputValue32_shift8 - sLowpass8_int32_shift8) >> 8; // 2.13 us
 
     /*
      * 32 bit generic functions
@@ -486,15 +524,29 @@ void doFiltersTimingTest(int16_t aInputValue) {
     timingPinLow();
     delayMicroseconds(5);
     timingPinHigh();
-    doLowpassShift_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 2);  // 3.13 us
+    doLowpassShift_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 2);  // 3.18 us
     timingPinLow();timingPinHigh();
-    doLowpass_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 64);      // 4.75 us  - 64 = 1/4 = >>2
+    doLowpass_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 64);      // 3.62 to 7.13 us depending on compiler optimization (inline or O3) - 64 = 1/4 = >>2
+    timingPinLow();timingPinHigh();
+    doLowpassShift_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 3);  // 3.06 us
+    timingPinLow();timingPinHigh();
+    doLowpass_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 32);      // 7.13 us  - 32 = 1/8 = >>3
     timingPinLow();timingPinHigh();
     doLowpassShift_int32_shift8(&sLowpass5_int32_shift8, tInputValue32_shift8, 5);  // 3.94 us
     timingPinLow();timingPinHigh();
-    doLowpass_int32_shift8(&sLowpass8_int32_shift8, tInputValue32_shift8, 8);       // 3.44 us  - 8 = 1/32 = >>5
+    doLowpass_int32_shift8(&sLowpass8_int32_shift8, tInputValue32_shift8, 8);       // 2.88 us to 7.13 us depending on compiler optimization (inline or O3) - 8 = 1/32 = >>5
     timingPinLow();timingPinHigh();
-    doLowpass_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 64);      // 4.63 us  - 64 = 1/4 = >>2
+    doLowpass_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 64);      // 7.13 us  - 64 = 1/4 = >>2
+
+    /*
+     * Float functions
+     */
+    timingPinLow();
+    delayMicroseconds(5);
+    timingPinHigh();
+    doLowpass5_float(&sLowpass5_float, aInputValue);    // 23.00 us | 28.56 us for 2. pass (negative input value?)
+    timingPinLow();timingPinHigh();
+    doLowpass8_float(&sLowpass8_float, aInputValue);    // 20,00 us | 25.19 us for 2. pass (negative input value?)
 
     /*
      * Biquad functions
@@ -505,9 +557,9 @@ void doFiltersTimingTest(int16_t aInputValue) {
     initBiquad16(&sBiQuad_int16, 256, 32);
     initBiquad32(&sBiQuad_int32, 64, 32);
     timingPinHigh();
-    doBiquad_int16(&sBiQuad_int16, aInputValue);    // 12.56 us | 12.94 us  - damping factor 1 -> damping, 64 ->shift 2
+    doBiquad_int16(&sBiQuad_int16, aInputValue);    // 12.94 us - damping factor 1 -> damping, 64 ->shift 2
     timingPinLow();timingPinHigh();
-    doBiquad_int32(&sBiQuad_int32, aInputValue);    // 21.75 us | 21.81 us - damping factor 1/4 -> low damping, 32 ->shift 3
+    doBiquad_int32(&sBiQuad_int32, aInputValue);    // 21.81 us - damping factor 1/4 -> low damping, 32 ->shift 3
 
     timingPinLow();
     interrupts();

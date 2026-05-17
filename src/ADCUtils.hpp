@@ -79,7 +79,7 @@ union WordUnionForADCUtils {
  * Persistent storage for VCC value
  */
 float sVCCVoltage;
-uint16_t sVCCVoltageMillivolt;
+uint16_t sVCCVoltageMillivolt; // Set by readVCCVoltageMillivoltSimple(), readVCCVoltageMillivolt()
 
 // for isVCCTooLowMultipleTimes()
 long sLastVCCCheckMillis;

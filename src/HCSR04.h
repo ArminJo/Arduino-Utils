@@ -34,7 +34,9 @@
 
 #include <stdint.h>
 
+#if !defined(DISTANCE_TIMEOUT_RESULT)
 #define DISTANCE_TIMEOUT_RESULT                   0
+#endif
 #define US_DISTANCE_DEFAULT_TIMEOUT_MICROS    20000  // Timeout of 20000L is 3.43 meter
 #define US_DISTANCE_DEFAULT_TIMEOUT_CENTIMETER  343  // Timeout of 20000L is 3.43 meter
 

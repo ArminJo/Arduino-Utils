@@ -72,9 +72,9 @@ inline void pinModeFastPortB(uint8_t aOutputPinNumber, uint8_t aMode) {
  * @param aUseOutputB  - true:  output at Pin3/2 - PB4/PB3 - OCR1B/!OCR1B
  *                     - false: output at Pin6/5 - PB1/PB0 - OCR1A/!OCR1A
  */
-void toneWithTimer1PWM(uint16_t aFrequencyHerz, bool aUseOutputB) {
+void toneWithTimer1PWM(uint16_t aFrequencyHertz, bool aUseOutputB) {
     uint8_t tPrescaler = 0x01;
-    uint16_t tOCR = F_CPU / aFrequencyHerz;
+    uint16_t tOCR = F_CPU / aFrequencyHertz;
     while (tOCR > 0x100 && tPrescaler < 0x0F) {
         tPrescaler++;
         tOCR >>= 1;

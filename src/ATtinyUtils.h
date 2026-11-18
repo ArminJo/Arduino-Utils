@@ -1,10 +1,9 @@
 /*
  * ATtinyUtils.h
  *
- *  Copyright (C) 2018-2020  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
- *  This file is part of ArduinoUtils https://github.com/ArminJo/ArduinoUtils.
+ *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
  *  Arduino-Utils is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +16,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -33,7 +32,6 @@
 //
 // On Digispark boards, PB5/USB- and PB3/USB+ are clamped by a 68 (USB A version) or 22 ohm (micro USB version) series resistor connected to a 3.7 V Zener to ground.
 // PB3/USB+ has a 1.0k (USB A version) or 1.5k (micro USB version) pullup to VCCC.
-
 // ATMEL ATTINY167
 // Pin numbers are for Digispark core
 // Pin numbers in parenthesis are for ATTinyCore
@@ -51,7 +49,6 @@
 //        5 (7) PA7 10|    |11  PB7 (15) RESET
 //                    +----+
 //
-
 #ifndef _ATTINY_UTILS_H
 #define _ATTINY_UTILS_H
 
@@ -60,17 +57,6 @@
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 
 #include <avr/io.h>
-
-#if defined(ARDUINO_AVR_DIGISPARK)
-#  if !defined(LED_BUILTIN)
-#define LED_BUILTIN PB1
-#  endif
-
-#elif defined(ARDUINO_AVR_DIGISPARKPRO)
-#undef LED_BUILTIN    // In case we use another core e.g. in Eclipse
-#define LED_BUILTIN 1 // On a Digispark Pro we have PB1 / D1 (Digispark library) or D9 (ATtinyCore lib) / on DigisparkBoard labeled as pin 1
-#endif
-
 #if (F_CPU == 1000000)
 #define TIMER0_CLOCK_DIVIDER_FOR_64_MICROS (_BV(CS01) | _BV(CS00))
 
@@ -105,16 +91,23 @@ inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
     // the following loop takes 4 cycles (4 microseconds  at 1 MHz) per iteration
     __asm__ __volatile__ (
             "1: sbiw %0,1" "\n\t"    // 2 cycles
-            "brne .-4" : "=w" (a4Microseconds) : "0" (a4Microseconds)// 2 cycles
+            "brne 1b" : "=w" (a4Microseconds) : "0" (a4Microseconds)// 2 cycles
     );
 }
+
+void toggleFastPortB(uint8_t aOutputPinNumber);
+void digitalWriteFastPortB(uint8_t aOutputPinNumber, bool aValue);
+bool digitalReadFastPortB(uint8_t aInputPinNumber);
+void pinModeFastPortB(uint8_t aOutputPinNumber, uint8_t aMode);
+
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
 void toneWithTimer1PWM(uint16_t aFrequency, bool aUseOutputB = false);
 void noToneWithTimer1PWM();
+void periodicInterruptWithTimer1(uint16_t aFrequency);
 #endif
 
 uint8_t getBODLevelFuses();
-bool isBODLevelBelow2_7Volt();
+bool isBODLevelBelow2_7VoltOrDisabled();
 bool isBODSFlagExistent();
 void changeDigisparkClock();
 

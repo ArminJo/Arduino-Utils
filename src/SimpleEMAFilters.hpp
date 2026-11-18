@@ -52,7 +52,6 @@
  *
  *
  *  Copyright (C) 2020-2026  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -67,7 +66,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -120,12 +119,16 @@ struct BiquadFilter32Struct sBiQuad_int32;
  */
 int16_t sInputValueForPrint;
 
-uint32_t FilterSelectionArray[8] {
+/*
+ * Mainly for testing, so RAM does not matter
+ */
+#define SIZE_OF_FILTER_SELECTION_ARRAY  8
+const uint32_t FilterSelectionArray[SIZE_OF_FILTER_SELECTION_ARRAY] {
 PRINT_SIGNIFICANT_FILTERS, PRINT_ALL_LOW_PASS, PRINT_LOW_HIGH_PASS, PRINT_BAND_PASS_AND_BAND_STOP, PRINT_LOW_PASS_1_3_5_8,
 PRINT_LOW_PASS_16_32, PRINT_HIGHER_ORDER_LOW_PASS, PRINT_ALL_BI_QUAD };
 
-const char *FilterSelectionStringArray[8] { "SIGNIFICANT_FILTERS", "ALL_LOW_PASS", "LOW_AND_HIGH_PASS", "BAND_PASS_AND_BAND_STOP",
-        "LOW_PASS_1_3_5_8", "LOW_PASS_16_32", "HIGHER_ORDER_LOW_PASS_16", "BI_QUAD_FILTERS" };
+const char *FilterSelectionStringArray[SIZE_OF_FILTER_SELECTION_ARRAY] { "SIGNIFICANT_FILTERS", "ALL_LOW_PASS", "LOW_AND_HIGH_PASS",
+        "BAND_PASS_AND_BAND_STOP", "LOW_PASS_1_3_5_8", "LOW_PASS_16_32", "HIGHER_ORDER_LOW_PASS_16", "BI_QUAD_FILTERS" };
 
 /**************************************************************************************************************
  * Generic LOWPASS filter functions
@@ -144,10 +147,10 @@ const char *FilterSelectionStringArray[8] { "SIGNIFICANT_FILTERS", "ALL_LOW_PASS
  **************************************************************************************************************/
 /*
  * Generic function with parameter aShiftValue which is the divisor exponent
- * !!! This function is NOT slower than the LOWPASS functions with fixed shifts :-) !!!
+ * !!! This function seems to be NOT slower than the LOWPASS functions with fixed shifts :-) !!!
  * Rounding is done by always adding a positive value before shifting, because shifted negative numbers are rounded towards -infinity
  * E.g. +13 to +15 >> 2 = 3 (rounded towards 0).  -13 to -15 >> 2 = -4 (rounded towards -infinity)
- * @param aShiftValue  Divisor exponent value i.e. >>2 = *1/4 = *1/2^2,   >>3 = *1/8 = *1/2^3
+ * @param aShiftValue  Divisor exponent value must be > 0.  E.g. >>2 = *1/4 = *1/2^2,   >>3 = *1/8 = *1/2^3
  */
 void doLowpassShift_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue, uint8_t aShiftValue) {
     *aLowpassAccumulator_int16 += ((aInputValue - *aLowpassAccumulator_int16) + (1 << (aShiftValue - 1))) >> aShiftValue;
@@ -167,12 +170,12 @@ void doLowpassShift_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValu
  * -  1 = >>8 ->  0.624 Hz
  */
 void doLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t aInputValue, uint8_t aAlpha_shift8) {
-    *aLowpassAccumulator_int16 += (((int32_t) (aInputValue - *aLowpassAccumulator_int16) * aAlpha_shift8) + (aAlpha_shift8 / 2))
-            >> 8;
+    *aLowpassAccumulator_int16 += (((int32_t) (aInputValue - *aLowpassAccumulator_int16) * aAlpha_shift8) + 128) >> 8;
 }
 
 /*
  * Has 12 db per octave and computes lowpass and double lowpass
+ * @param aShiftValue  Divisor exponent value must be > 0.  E.g. >>2 = *1/4 = *1/2^2,   >>3 = *1/8 = *1/2^3
  */
 void doDoubleLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDoubleLowpassAccumulator_int16, int16_t aInputValue,
         uint8_t aShiftValue) {
@@ -183,6 +186,7 @@ void doDoubleLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDoubleL
 
 /*
  * Has 18 db per octave
+ * @param aShiftValue  Divisor exponent value must be > 0.  E.g. >>2 = *1/4 = *1/2^2,   >>3 = *1/8 = *1/2^3
  */
 void doTripleLowpass_int16(int16_t *aLowpassAccumulator_int16, int16_t *aDoubleLowpassAccumulator_int16,
         int16_t *aTripleLowpassAccumulator_int16, int16_t aInputValue, uint8_t aShiftValue) {
@@ -415,6 +419,7 @@ void resetFilters() {
     sLowpass3 = 0;
     sLowpass4 = 0;
     sLowpass5 = 0;
+    sLowpass6 = 0;
 
     sDoubleLowpass3 = 0;
     sDoubleLowpass4 = 0;
@@ -422,6 +427,7 @@ void resetFilters() {
 
     sTripleLowpass3 = 0;
 
+    sLowpass2_int32_shift8 = 0;
     sLowpass3_int32_shift8 = 0;
     sLowpass5_int32_shift8 = 0;
     sLowpass8_int32_shift8 = 0;
@@ -440,7 +446,7 @@ void doFiltersTimingTest(int16_t aInputValue) {
 #if defined(MEASURE_TIMING)
     noInterrupts();
     // set Biquad filter coefficients
-    initBiquad16(&sBiQuad_int16, 256, 32); // damping factor 1 -> damping, 64 ->shift 2
+    initBiquad16(&sBiQuad_int16, 256, 32); // damping factor 1 -> damping, 32 ->shift 3 (64 ->shift 2)
     initBiquad32(&sBiQuad_int32, 64, 32); // damping factor 1/4 -> low damping, 32 ->shift 3
 
     pinMode(TIMING_OUT_PIN, OUTPUT);
@@ -474,7 +480,7 @@ void doFiltersTimingTest(int16_t aInputValue) {
     doLowpass5_int16(&sLowpass5, aInputValue);                  // 2.63 us
 
     timingPinLow();timingPinHigh();
-    sLowpass6 += ((aInputValue - sLowpass5) + (1 << 5)) >> 6;   //  us
+    sLowpass6 += ((aInputValue - sLowpass6) + (1 << 5)) >> 6;   //  us
 
     /*
      * 16 bit generic functions
@@ -524,19 +530,19 @@ void doFiltersTimingTest(int16_t aInputValue) {
     timingPinLow();
     delayMicroseconds(5);
     timingPinHigh();
-    doLowpassShift_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 2);  // 3.18 us
+    doLowpassShift_int32_shift8(&sLowpass2_int32_shift8, aInputValue, 2);  // 3.18 us
     timingPinLow();timingPinHigh();
-    doLowpass_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 64);      // 3.62 to 7.13 us depending on compiler optimization (inline or O3) - 64 = 1/4 = >>2
+    doLowpass_int32_shift8(&sLowpass2_int32_shift8, aInputValue, 64);      // 3.62 to 7.13 us depending on compiler optimization (inline or O3) - 64 = 1/4 = >>2
     timingPinLow();timingPinHigh();
-    doLowpassShift_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 3);  // 3.06 us
+    doLowpassShift_int32_shift8(&sLowpass2_int32_shift8, aInputValue, 3);  // 3.06 us
     timingPinLow();timingPinHigh();
-    doLowpass_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 32);      // 7.13 us  - 32 = 1/8 = >>3
+    doLowpass_int32_shift8(&sLowpass2_int32_shift8, aInputValue, 32);      // 7.13 us  - 32 = 1/8 = >>3
     timingPinLow();timingPinHigh();
-    doLowpassShift_int32_shift8(&sLowpass5_int32_shift8, tInputValue32_shift8, 5);  // 3.94 us
+    doLowpassShift_int32_shift8(&sLowpass5_int32_shift8, aInputValue, 5);  // 3.94 us
     timingPinLow();timingPinHigh();
-    doLowpass_int32_shift8(&sLowpass8_int32_shift8, tInputValue32_shift8, 8);       // 2.88 us to 7.13 us depending on compiler optimization (inline or O3) - 8 = 1/32 = >>5
+    doLowpass_int32_shift8(&sLowpass8_int32_shift8, aInputValue, 8);       // 2.88 us to 7.13 us depending on compiler optimization (inline or O3) - 8 = 1/32 = >>5
     timingPinLow();timingPinHigh();
-    doLowpass_int32_shift8(&sLowpass2_int32_shift8, tInputValue32_shift8, 64);      // 7.13 us  - 64 = 1/4 = >>2
+    doLowpass_int32_shift8(&sLowpass2_int32_shift8, aInputValue, 64);      // 7.13 us  - 64 = 1/4 = >>2
 
     /*
      * Float functions
@@ -557,7 +563,7 @@ void doFiltersTimingTest(int16_t aInputValue) {
     initBiquad16(&sBiQuad_int16, 256, 32);
     initBiquad32(&sBiQuad_int32, 64, 32);
     timingPinHigh();
-    doBiquad_int16(&sBiQuad_int16, aInputValue);    // 12.94 us - damping factor 1 -> damping, 64 ->shift 2
+    doBiquad_int16(&sBiQuad_int16, aInputValue);    // 12.94 us - damping factor 1 -> damping, 32 ->shift 3
     timingPinLow();timingPinHigh();
     doBiquad_int32(&sBiQuad_int32, aInputValue);    // 21.81 us - damping factor 1/4 -> low damping, 32 ->shift 3
 
@@ -570,9 +576,6 @@ void doFiltersTimingTest(int16_t aInputValue) {
  * The main demo function
  */
 void doFiltersStep(int16_t aInputValue) {
-    // set Biquad filter coefficients
-    initBiquad16(&sBiQuad_int16, 256, 32); // damping factor 1 -> damping, 64 ->shift 2
-    initBiquad32(&sBiQuad_int32, 64, 32); // damping factor 1/4 -> low damping, 32 ->shift 3
 
     sInputValueForPrint = aInputValue;
 
@@ -651,6 +654,9 @@ void doFiltersStep(int16_t aInputValue) {
  * Use "P" instead of "pass", since we have problems with the length of caption
  */
 void printFiltersCaption(uint8_t aFilterSelection) {
+    if (aFilterSelection >= SIZE_OF_FILTER_SELECTION_ARRAY) {
+        return;
+    }
     uint32_t aPrintMask = FilterSelectionArray[aFilterSelection];
     Serial.print(F("Input "));
 
@@ -744,115 +750,115 @@ void printFiltersCaption(uint8_t aFilterSelection) {
 
 void printFiltersResults(uint32_t aPrintMask) {
     Serial.print(sInputValueForPrint);
-    Serial.print(" ");
+    Serial.print(' ');
 
     if (aPrintMask & PRINT_LP_1) {
         Serial.print(sLowpass1);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_2) {
         Serial.print(sLowpass2);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_3) {
         Serial.print(sLowpass3);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_3_32) {
         Serial.print(sLowpass3_int32_shift8 >> 8);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_DOUBLE_LP_3) {
         Serial.print(sDoubleLowpass3);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_TRIPLE_LP_3) {
         Serial.print(sTripleLowpass3);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_4) {
         Serial.print(sLowpass4);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_DOUBLE_LP_4) {
         Serial.print(sDoubleLowpass4);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_5) {
         Serial.print(sLowpass5);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_5_32) {
         Serial.print(sLowpass5_int32_shift8 >> 8);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_5_FLOAT) {
         Serial.print(sLowpass5_float);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_8_32) {
         Serial.print(sLowpass8_int32_shift8 >> 8);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_LP_8_FLOAT) {
         Serial.print(sLowpass8_float);
-        Serial.print(" ");
+        Serial.print(' ');
     }
 
     if (aPrintMask & PRINT_HIGH_PASS_1_16) {
         Serial.print(sInputValueForPrint - sLowpass1);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_HIGH_PASS_3_16) {
         Serial.print(sInputValueForPrint - sLowpass3);
-        Serial.print(" ");
+        Serial.print(' ');
     }
 
     if (aPrintMask & PRINT_BAND_PASS_1_3) {
         Serial.print(sLowpass1 - sLowpass3);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_BAND_PASS_1_5) {
         Serial.print(sLowpass1 - sLowpass5);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_BAND_PASS_3_4) {
         Serial.print(sLowpass3 - sLowpass4);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_BAND_PASS_3_5) {
         Serial.print(sLowpass3 - sLowpass5);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_BAND_STOP_3_4) {
         Serial.print(sInputValueForPrint - (sLowpass3 - sLowpass4));
-        Serial.print(" ");
+        Serial.print(' ');
     }
 
     if (aPrintMask & PRINT_BQ_LP_16) {
         Serial.print(sBiQuad_int16.BiQuadLowpass);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_BQ_HP_16) {
         Serial.print(sBiQuad_int16.BiQuadHighpass);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_BQ_BP_16) {
         Serial.print(sBiQuad_int16.BiQuadBandpass);
-        Serial.print(" ");
+        Serial.print(' ');
     }
 
     if (aPrintMask & PRINT_BQ_LP_32) {
         Serial.print(sBiQuad_int32.BiQuadLowpass_shift8 >> 8);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_BQ_HP_32) {
         Serial.print(sBiQuad_int32.BiQuadHighpass_shift8 >> 8);
-        Serial.print(" ");
+        Serial.print(' ');
     }
     if (aPrintMask & PRINT_BQ_BP_32) {
         Serial.print(sBiQuad_int32.BiQuadBandpass_shift8 >> 8);
-        Serial.print(" ");
+        Serial.print(' ');
     }
 
     Serial.println();

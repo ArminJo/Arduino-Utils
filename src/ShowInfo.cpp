@@ -1,8 +1,7 @@
 /*
  * ShowInfo.cpp
  *
- *  Copyright (C) 2018-2019  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -17,7 +16,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -27,54 +26,12 @@
 
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
 #include "ATtinySerialOut.h"
+#include "ADCUtils.h" // for ADC_GND_CHANNEL_MUX etc.
 #endif
 
 // Based on https://playground.arduino.cc/Main/ShowInfo
 
 #include <avr/boot.h>
-
-float GetTemp(void) {
-    unsigned int wADC;
-    float t;
-
-    // The internal temperature has to be used
-    // with the internal reference of 1.1V.
-    // Channel 8 can not be selected with
-    // the analogRead function yet.
-
-    // This code is not valid for the Arduino Mega,
-    // and the Arduino Mega 2560.
-
-#if defined(THIS_MIGHT_BE_VALID_IN_THE_FUTURE)
-    analogReference (INTERNAL);
-    delay(20);            // wait for voltages to become stable.
-    wADC = analogRead(8);// Channel 8 is temperature sensor.
-#else
-    // Set the internal reference and mux.
-    ADMUX = (_BV(REFS1) | _BV(REFS0) | _BV(MUX3));
-    ADCSRA |= _BV(ADEN);  // enable the ADC
-
-    delay(20);            // wait for voltages to become stable.
-
-    ADCSRA |= _BV(ADSC);  // Start the ADC
-
-    // Detect end-of-conversion
-    while (bit_is_set(ADCSRA, ADSC))
-        ;
-
-    // Reading register "ADCW" takes care of how to read ADCL and ADCH.
-#if defined(__AVR_ATmega32U4__)
-    wADC = ADC;      // For Arduino Leonardo
-#else
-    wADC = ADCW;     // 'ADCW' is preferred over 'ADC'
-#endif
-#endif
-
-    // The offset of 337.0 could be wrong. It is just an indication.
-    t = (wADC - 337.0) / 1.22;
-
-    return (t);
-}
 
 // Helper function for sketch size.
 // The sketch size is runtime calculated.
@@ -91,16 +48,16 @@ unsigned long sketchSize(void) {
     extern int _etext;
     extern int _edata;
 
-    return ((unsigned long) (&_etext) + ((unsigned long) (&_edata) - 256L));
+    return ((unsigned long) (&_etext) + ((unsigned long) (&_edata) - RAMSTART));
 }
 
 void Information(void) {
-#if !defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
+#if !(defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__))
     int data1, data2, data3, data4;
     unsigned long ul;
     float percentage;
 
-    Serial.println(F(""));
+    Serial.println();
 #if !defined(__AVR_ATmega32U4__)
     Serial.println(F("Information"));
     Serial.println(F("-----------"));
@@ -117,9 +74,12 @@ void Information(void) {
 #if defined(ARDUINO)
     Serial.print(F("ARDUINO = "));
     Serial.print(ARDUINO);
-    Serial.print(F(" (Arduino version "));
-    Serial.print((float) ARDUINO / 100.0, 2);
-    Serial.println(F(")"));
+    Serial.print(F(" Arduino version = "));
+    Serial.print(ARDUINO / 10000);         // 1
+    Serial.print('.');
+    Serial.print((ARDUINO / 100) % 100);   // 8
+    Serial.print('.');
+    Serial.println(ARDUINO % 100);         // 19
 #endif
 
     Serial.print(F("__VERSION__ = "));
@@ -150,8 +110,8 @@ void Information(void) {
     Serial.print(F("GPIOR1 = 0x"));
     Serial.println(GPIOR1, HEX);
 
-    Serial.print(F("GPIOR1 = 0x"));
-    Serial.println(GPIOR1, HEX);
+    Serial.print(F("GPIOR2 = 0x"));
+    Serial.println(GPIOR2, HEX);
 #endif
 
     Serial.print(F("RAMEND   = 0x"));
@@ -244,13 +204,12 @@ void Information(void) {
     Serial.println(F("__AVR_ATmega2560__"));
 #endif
 
-#if defined(SIGRD)
-    Serial.print(F("SIGRD = "));
-    Serial.println(SIGRD, DEC);
-#else
-    Serial.println(F("SIGRD : not defined(let's make it 5 and see what happens)."));
+#if !defined(SIGRD)
+    Serial.println(F("SIGRD : not defined -> let's make it 5 and see what happens"));
 #define SIGRD 5
 #endif
+    Serial.print(F("SIGRD = "));
+    Serial.println(SIGRD, DEC);
 
     Serial.print(F("Signature = 0x"));
 
@@ -266,26 +225,20 @@ void Information(void) {
     Serial.println(data3, HEX);
 
     Serial.print(F("calibration = "));
-    Serial.println(data3, DEC);
+    Serial.println(data4, DEC);
 
 #if !defined(__AVR_ATmega32U4__)
     Serial.print(F("Number of seconds since start = "));
     Serial.println(millis() / 1000L, DEC);
 #endif
 
-#if defined(__AVR_ATmega328P__)
-    Serial.print(F("Internal Temperature = "));
-    Serial.print(GetTemp(), 1);
-    Serial.println(F(" Celsius   (the offset could be wrong)."));
-#endif
-
     Serial.println(F("UTF-8 test:"));
-    Serial.println(F("    Micro �"));
-    Serial.println(F("    Euro  �"));
-    Serial.println(F("    (c)   �"));
+    Serial.println(F("Micro µ"));
+    Serial.println(F(" Euro €"));
+    Serial.println(F("  (c) ©"));
 
     Serial.println(F("-----------"));
-#endif
+#endif // !defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
 }
 
 void printMCUSR(uint8_t aMCUSRContent) {
@@ -312,12 +265,30 @@ void printMCUSR(uint8_t aMCUSRContent) {
     Serial.println();
 }
 
-void printBODLevel(uint8_t aHighFuseBits) {
+/*
+ * Fuse byte that contains BODLEVEL2:0
+ * ATtinies: high fuse; most ATmegas: extended fuse. In both cases bits 2:0.
+ */
+#if defined(__AVR_ATmega48__) || defined(__AVR_ATmega48A__) || defined(__AVR_ATmega48P__) || defined(__AVR_ATmega48PB__) \
+    || defined(__AVR_ATmega88__) || defined(__AVR_ATmega88A__) || defined(__AVR_ATmega88P__) || defined(__AVR_ATmega88PA__) || defined(__AVR_ATmega88PB__) \
+    || defined(__AVR_ATmega168__) || defined(__AVR_ATmega168A__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega168PA__) || defined(__AVR_ATmega168PB__) \
+    || defined(__AVR_ATmega328__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328PB__) \
+    || defined(__AVR_ATmega164P__) || defined(__AVR_ATmega324P__) || defined(__AVR_ATmega324PA__) || defined(__AVR_ATmega324PB__) \
+    || defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284__) || defined(__AVR_ATmega1284P__) \
+    || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega32U4__)
+#define GET_BOD_LEVEL_FUSE_BITS   GET_EXTENDED_FUSE_BITS
+#else
+#define GET_BOD_LEVEL_FUSE_BITS   GET_HIGH_FUSE_BITS  // ATtiny25/45/85, 24/44/84, 87/167, 2313
+#endif
+#define BOD_LEVEL_MASK  0x07 // BODLEVEL2:0 are always bits 2:0
+
+/*
+ * @param aFuseBitsContainingBODLevel  High fuse on ATtinies, extended fuse on most ATmegas (see GET_BOD_LEVEL_FUSE_BITS)
+ */
+void printBODLevel(uint8_t aFuseBitsContainingBODLevel) {
     Serial.print(F("Brown-out="));
-#if defined(FUSE_BODLEVEL2) && defined(FUSE_BODLEVEL1) && defined(FUSE_BODLEVEL0)
-    uint8_t tBrownOutDetectionBits = aHighFuseBits & (~FUSE_BODLEVEL2 | ~FUSE_BODLEVEL1 | ~FUSE_BODLEVEL0 );
-    switch (tBrownOutDetectionBits) {
-    // 0-3 are reserved codes (for ATtiny)
+    switch (aFuseBitsContainingBODLevel & BOD_LEVEL_MASK) {
+    // 0-3 are reserved codes
     case 4:
         Serial.print(F("4.3V"));
         break;
@@ -331,23 +302,17 @@ void printBODLevel(uint8_t aHighFuseBits) {
         Serial.print(F("disabled"));
         break;
     default:
+        Serial.print(F("reserved"));
         break;
     }
-#else
-    Serial.print(F("FUSE_BODLEVEL2 and FUSE_BODLEVEL1 and FUSE_BODLEVEL0 not defined"));
-#endif
     Serial.println();
 }
 
 void printBODLevel() {
-#if defined(GET_HIGH_FUSE_BITS)
-    uint8_t tHighFuseBits = boot_lock_fuse_bits_get(GET_HIGH_FUSE_BITS);
-    printBODLevel(tHighFuseBits);
-#else
-    Serial.print(F("GET_HIGH_FUSE_BITS not defined"));
-#endif
+    printBODLevel(boot_lock_fuse_bits_get(GET_BOD_LEVEL_FUSE_BITS));
 }
 
+#if defined(__AVR_ATtiny85__)
 /*
  * Output description for all fuses except "DebugWire enabled"
  */
@@ -433,7 +398,7 @@ void printFuses(void) {
     Serial.println();
     Serial.println();
     Serial.print(F("HighFuses=0x"));
-    Serial.println(tHighFuseBits,HEX);
+    Serial.println(tHighFuseBits, HEX);
 
     Serial.print(F("Reset"));
     if (tHighFuseBits & ~FUSE_RSTDISBL) {
@@ -459,12 +424,12 @@ void printFuses(void) {
     }
     Serial.println(F(" enabled"));
 
-    printBODLevel(tHighFuseBits);
+    printBODLevel(boot_lock_fuse_bits_get(GET_BOD_LEVEL_FUSE_BITS));
 
     uint8_t tExtFuseBits = boot_lock_fuse_bits_get(GET_EXTENDED_FUSE_BITS);
     Serial.println();
     Serial.print(F("ExtFuses=0x"));
-    Serial.println(tExtFuseBits,HEX);
+    Serial.println(tExtFuseBits, HEX);
 #if defined(FUSE_SELFPRGEN)
     Serial.print(F("Self programming"));
     if (tExtFuseBits & ~FUSE_SELFPRGEN) {
@@ -474,8 +439,10 @@ void printFuses(void) {
 #endif
     Serial.println();
 }
+#endif
 
 void printBODSFlagExistence() {
+#if defined(BODS) && defined(BODSE)
     /*
      * Turn off the brown-out detector - this works only for ATtini85 revision C, which I have not seen in the wild.
      */
@@ -488,8 +455,10 @@ void printBODSFlagExistence() {
         Serial.print(F(" not"));
     }
     Serial.println(F(" existent"));
+#else
+    Serial.println(F("BODS flag not defined for this CPU"));
+#endif
 }
-#endif //  defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
 
 #if !defined(__AVR_ATmega32U4__)
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
@@ -519,7 +488,7 @@ void Timer0RegisterDump(void) {
     Serial.printlnHex(OCR0A);
 #if defined(OCR0B)
     Serial.print(F("OCR0B="));
-    Serial.printHex(OCR0B);
+    Serial.printlnHex(OCR0B);
 #endif
 #if defined(ASSR)
     Serial.print(F("ASSR="));
@@ -539,7 +508,6 @@ void Timer0RegisterDump(void) {
 #endif
 
     TimerCommonRegisterDump();
-
     Serial.println();
 }
 
@@ -598,7 +566,6 @@ void TimerRegisterDump(void) {
     Timer1RegisterDump();
 }
 
-#if ! defined(ARDUINO_AVR_DIGISPARKPRO)
 void ADCChannelDump(void) {
     Serial.println(F("ADC channel dump:"));
 #if defined(A0)
@@ -613,35 +580,42 @@ void ADCChannelDump(void) {
     Serial.print(F("A2="));
     Serial.println(analogRead(A2));
 #endif
+#if defined(A3)
     Serial.print(F("A3="));
     Serial.println(analogRead(A3));
+#endif
     Serial.print(F("1.1V="));
-    Serial.println(analogRead(12));
+    Serial.println(analogRead(ADC_1_1_VOLT_CHANNEL_MUX));
     Serial.print(F("GND="));
-    Serial.println(analogRead(13));
+    Serial.println(analogRead(ADC_GND_CHANNEL_MUX));
     Serial.print(F("Tmp="));
-    Serial.println(analogRead(15));
+    Serial.println(analogRead(ADC_TEMPERATURE_CHANNEL_MUX));
     Serial.print(F("ADMUX="));
     Serial.printlnHex(ADMUX);
 }
-#endif
 #else // defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
 void Timer0RegisterDump(void) {
     Serial.println(F("Timer0 Register dump:"));
+#if defined(TCCR0A)
     Serial.print(F("TIMER0 TCCR0A = 0x"));
     Serial.println(TCCR0A, HEX);
+#endif
     Serial.print(F("TIMER0 TCCR0B = 0x"));
     Serial.println(TCCR0B, HEX);
     Serial.print(F("TIMER0 OCR0A  = 0x"));
     Serial.println(OCR0A, HEX);
     Serial.print(F("TIMER0 OCR0B  = 0x"));
     Serial.println(OCR0B, HEX);
+#if defined(TIMSK0)
     Serial.print(F("TIMER0 TIMSK0 = 0x"));
     Serial.println(TIMSK0, HEX);
+#endif
     Serial.print(F("TIMER0 TCNT0  = 0x"));
     Serial.println(TCNT0, HEX);
+#if defined(TIFR0)
     Serial.print(F("TIMER0 TIFR0  = 0x"));
     Serial.println(TIFR0, HEX);
+#endif
 }
 
 #if defined(TCCR1A)
@@ -694,9 +668,13 @@ void Timer2RegisterDump(void) {
 
 void TimerRegisterDump(void) {
     Timer0RegisterDump();
+#if defined(TCCR1A)
     Timer1RegisterDump();
+#endif
+#if defined(TCCR2A)
     Timer2RegisterDump();
+#endif
 }
-#endif // AVR
-
+#endif // defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
 #endif // !defined(__AVR_ATmega32U4__)
+#endif // defined(__AVR__)

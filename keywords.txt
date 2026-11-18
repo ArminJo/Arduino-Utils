@@ -1,83 +1,255 @@
 #######################################
-# Syntax Coloring Map for ArduinoUtils
+# Syntax Coloring Map for Arduino-Utils
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 BlinkLed	KEYWORD1
+PrintIfChanged	KEYWORD1
+WordUnion	KEYWORD1
+LongUnion	KEYWORD1
+LongLongUnion	KEYWORD1
+ResistanceMeasurementResultStruct	KEYWORD1
+BiquadFilter16Struct	KEYWORD1
+BiquadFilter32Struct	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-# From HCSR04.cpp
-initUSDistancePins	KEYWORD2
-initUSDistancePin	KEYWORD3
-getUSDistance	KEYWORD2
-getCentimeterFromUSMicroSeconds	KEYWORD2
-getUSDistanceAsCentimeter	KEYWORD2
-getUSDistanceAsCentimeterWithCentimeterTimeout	KEYWORD2
-testUSSensor	KEYWORD2
-
-US_DISTANCE_DEFAULT_TIMEOUT_MICROS	LITERAL1
-US_DISTANCE_TIMEOUT_MICROS_FOR_1_METER	LITERAL1
-US_DISTANCE_TIMEOUT_MICROS_FOR_2_METER	LITERAL1
-US_DISTANCE_TIMEOUT_MICROS_FOR_3_METER	LITERAL1
-US_DISTANCE_DEFAULT_TIMEOUT_CENTIMETER	LITERAL1
-
-# From ADCUtils.cpp
+# From ADCUtils.hpp
 readADCChannel	KEYWORD2
 readADCChannelWithReference	KEYWORD2
+readADCChannelWithReferenceUsingInternalReference	KEYWORD2
+waitAndReadADCChannelWithReference	KEYWORD2
+waitAndReadADCChannelWithReferenceAndRestoreADMUXAndReference	KEYWORD2
 readADCChannelWithOversample	KEYWORD2
 readADCChannelWithReferenceOversample	KEYWORD2
+readADCChannelWithReferenceOversampleFast	KEYWORD2
+readADCChannelMultiSamples	KEYWORD2
 readADCChannelMultiSamplesWithReference	KEYWORD2
+readADCChannelMultiSamplesWithReferenceAndPrescaler	KEYWORD2
 readADCChannelWithReferenceMax	KEYWORD2
 readADCChannelWithReferenceMaxMicros	KEYWORD2
 readUntil4ConsecutiveValuesAreEqual	KEYWORD2
-
+setADCChannelAndReferenceForNextConversion	KEYWORD2
+setADCChannelForNextConversionAndWaitUsingInternalReference	KEYWORD2
+setADCChannelForNextConversionAndWaitUsingDefaultReference	KEYWORD2
+checkAndWaitForReferenceAndChannelToSwitch	KEYWORD2
 getVCCVoltageSimple	KEYWORD2
+readVCCVoltageSimple	KEYWORD2
 getVCCVoltageMillivoltSimple	KEYWORD2
-getTemperatureSimple	KEYWORD2
+readVCCVoltageMillivoltSimple	KEYWORD2
 getVCCVoltage	KEYWORD2
+readVCCVoltage	KEYWORD2
 getVCCVoltageMillivolt	KEYWORD2
+readVCCVoltageMillivolt	KEYWORD2
+getVCCVoltageReadingFor1_1VoltReference	KEYWORD2
 printVCCVoltageMillivolt	KEYWORD2
-getTemperature	KEYWORD2
+readAndPrintVCCVoltageMillivolt	KEYWORD2
+getVoltageMillivolt	KEYWORD2
+getVoltageMillivoltWith_1_1VoltReference	KEYWORD2
+getCPUTemperatureSimple	KEYWORD2
+getCPUTemperature	KEYWORD2
+isVCCUSBPowered	KEYWORD2
+isVCCUndervoltageMultipleTimes	KEYWORD2
+resetCounterForVCCUndervoltageMultipleTimes	KEYWORD2
+isVCCUndervoltage	KEYWORD2
+isVCCEmergencyUndervoltage	KEYWORD2
+isVCCOvervoltage	KEYWORD2
+isVCCOvervoltageSimple	KEYWORD2
+isVCCTooHighSimple	KEYWORD2
 
-ADC_PRESCALE	LITERAL1
-SHIFT_VALUE_FOR_REFERENCE	LITERAL1
-ADC_TEMPERATURE_CHANNEL_MUX	LITERAL1
+# From ATtinyUtils.h
+toggleFastPortB	KEYWORD2
+digitalWriteFastPortB	KEYWORD2
+digitalReadFastPortB	KEYWORD2
+pinModeFastPortB	KEYWORD2
+toneWithTimer1PWM	KEYWORD2
+noToneWithTimer1PWM	KEYWORD2
+periodicInterruptWithTimer1	KEYWORD2
+getBODLevelFuses	KEYWORD2
+isBODLevelBelow2_7VoltOrDisabled	KEYWORD2
+isBODSFlagExistent	KEYWORD2
+changeDigisparkClock	KEYWORD2
+delay4CyclesInlineExact	KEYWORD2
 
-# From HexDump.cpp
-printBytePaddedHex	LITERAL1
-printWordPaddedHex	LITERAL1
-printMemoryHexDump	LITERAL1
+# From AVRUtils.h
+initSleep	KEYWORD2
+initPeriodicSleepWithWatchdog	KEYWORD2
+initTimeoutWithWatchdog	KEYWORD2
+computeSleepMillis	KEYWORD2
+sleepWithWatchdog	KEYWORD2
+getStartOfAvailableHeap	KEYWORD2
+printStartOfAvailableHeap	KEYWORD2
+getCurrentAvailableStackSize	KEYWORD2
+printCurrentAvailableStackSize	KEYWORD2
+getCurrentAvailableHeapSize	KEYWORD2
+getTheoreticalMaximumAvailableHeapSize	KEYWORD2
+printCurrentAvailableHeapSize	KEYWORD2
+printCurrentAvailableHeapSizeSimple	KEYWORD2
+initStackFreeMeasurement	KEYWORD2
+getStackMaxUsedAndUnusedSizes	KEYWORD2
+getHeapMaxUsedSize	KEYWORD2
+printStackMaxUsedAndUnusedSizes	KEYWORD2
+printStackMaxUsedAndUnusedSizesIfChanged	KEYWORD2
+printBaseRAMData	KEYWORD2
+printRAMAndStackInfo	KEYWORD2
+isAddressInRAM	KEYWORD2
+isAddressBelowAvailableHeapStart	KEYWORD2
+set__malloc_margin	KEYWORD2
+reset__malloc_margin	KEYWORD2
+testCallocSizesAndPrint	KEYWORD2
 
-# From AVRUtils.cpp
-initSleep	LITERAL1
-initPeriodicSleepWithWatchdog	LITERAL1
-computeSleepMillis	LITERAL1
-sleepWithWatchdog	LITERAL1
+# From BlinkLed.h
+blinkLEDBlocking	KEYWORD2
+blinkBlocking	KEYWORD2
+setOnOffTime	KEYWORD2
+startWithOnOffTime	KEYWORD2
+startWithPeriod	KEYWORD2
+startWithOnTime	KEYWORD2
+startWithOffTime	KEYWORD2
+startWithFrequency	KEYWORD2
+setEnabled	KEYWORD2
 
-getAvailableHeapStart	LITERAL1
-getCurrentAvailableStack	LITERAL1
-getCurrentAvailableHeapSize	LITERAL1
-printAvailableHeapStart	LITERAL1
-printCurrentFreeHeap	LITERAL1
-printCurrentAvailableHeap	LITERAL1
+# From HCSR04.hpp
+initUSDistancePins	KEYWORD2
+initUSDistancePin	KEYWORD2
+setHCSR04OnePinMode	KEYWORD2
+getUSDistance	KEYWORD2
+getCentimeterFromUSMicroSeconds	KEYWORD2
+getMillisFromUSCentimeter	KEYWORD2
+getUSDistanceAsCentimeter	KEYWORD2
+getUSDistanceAsCentimeterWithCentimeterTimeout	KEYWORD2
+getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged	KEYWORD2
+startUSDistanceAsCentimeterWithCentimeterTimeoutNonBlocking	KEYWORD2
+isUSDistanceMeasureFinished	KEYWORD2
+testUSSensor	KEYWORD2
 
-initStackFreeMeasurement	LITERAL1
-getStackUnusedBytes	LITERAL1
-getStackMaxUsedBytes	LITERAL1
-getStackUnusedAndMaxUsedBytes	LITERAL1
-printStackMaxUsedBytes	LITERAL1
-printStackUnusedAndMaxUsedBytes	LITERAL1
-printStackUnusedAndMaxUsedBytesIfChanged	LITERAL1
-printRAMInfo	LITERAL1
+# From HexDump.hpp
+printBufferHex	KEYWORD2
+printBufferHexDump	KEYWORD2
+printBufferHexAndASCIIDump	KEYWORD2
+printMemoryHexDump	KEYWORD2
+printMemoryHexNoASCIIDump	KEYWORD2
+printMemoryHexAndASCIIDump	KEYWORD2
+printStackMemory	KEYWORD2
+printStackDump	KEYWORD2
+printBytePaddedHex	KEYWORD2
+printWordPaddedHex	KEYWORD2
 
-isAddressInRAM	LITERAL1
-isAddressBelowHeap	LITERAL1
+# From LCDPrintUtils.hpp
+LCDResetCursor	KEYWORD2
+LCDPrintSpaces	KEYWORD2
+LCDClearLine	KEYWORD2
+LCDPrintAsFloatAs5CharacterString_2_3_Decimals	KEYWORD2
+LCDPrintFloatValueRightAligned	KEYWORD2
+LCDUnitTestPrintFloatValueRightAligned	KEYWORD2
+LCDCreateCustomCharPGM	KEYWORD2
+LCDShowSpecialCharacters	KEYWORD2
+LCDShowCustomCharacters	KEYWORD2
+getNumberOfDecimalsFor16BitValues	KEYWORD2
+getNumberOfDecimalsFor32BitValues	KEYWORD2
+
+# From MeasureVoltageAndResistance.hpp
+MeasureVoltageAndResistance	KEYWORD2
+measureVoltage	KEYWORD2
+measureResistance	KEYWORD2
+setDirectVoltageMode	KEYWORD2
+setResistorMode	KEYWORD2
+printVoltageAndResistanceUsage	KEYWORD2
+
+# From MillisUtils.h
+delayAndCallFunctionEveryMillis	KEYWORD2
+disableMillisInterrupt	KEYWORD2
+enableMillisInterrupt	KEYWORD2
+addToMillis	KEYWORD2
+speedTestWith1kCalls	KEYWORD2
+delayMilliseconds	KEYWORD2
+areMillisGone	KEYWORD2
+
+# From PrintUtils.hpp
+printWithLeadingText	KEYWORD2
+
+# From ShowInfo.h
+sketchSize	KEYWORD2
+Information	KEYWORD2
+printMCUSR	KEYWORD2
+printBODLevel	KEYWORD2
+printBODSFlagExistence	KEYWORD2
+printFuses	KEYWORD2
+TimerCommonRegisterDump	KEYWORD2
+Timer0RegisterDump	KEYWORD2
+Timer1RegisterDump	KEYWORD2
+Timer2RegisterDump	KEYWORD2
+TimerRegisterDump	KEYWORD2
+ADCChannelDump	KEYWORD2
+
+# From SimpleEMAFilters.hpp
+doLowpass_int16	KEYWORD2
+doLowpass_int32_shift8	KEYWORD2
+doBiquad_int16	KEYWORD2
+doBiquad_int32	KEYWORD2
+initBiquad16	KEYWORD2
+initBiquad32	KEYWORD2
+resetBiquad16	KEYWORD2
+resetBiquad32	KEYWORD2
+resetFilters	KEYWORD2
+doFiltersTimingTest	KEYWORD2
+doFiltersStep	KEYWORD2
+printFiltersCaption	KEYWORD2
+printFiltersResults	KEYWORD2
+
+# From ToneUtils.hpp
+toneSimpleAtPin3	KEYWORD2
+toneSimpleAtPin11	KEYWORD2
+noToneSimpleAtPin3Or11	KEYWORD2
+
+# From WireUtils.hpp
+writeI2CByte	KEYWORD2
+readI2CWordLSBFirst	KEYWORD2
+readI2CWordMSBFirst	KEYWORD2
+printWireError	KEYWORD2
+checkForAttachedI2CDevice	KEYWORD2
+scanForAttachedI2CDevice	KEYWORD2
+
+# From digitalWriteFast.h
+digitalWriteFast	KEYWORD2
+digitalReadFast	KEYWORD2
+digitalToggleFast	KEYWORD2
+pinModeFast	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
+
+# From ADCUtils.h
+ADC_PRESCALE	LITERAL1
+ADC_PRESCALE_26_MICROS	LITERAL1
+SHIFT_VALUE_FOR_REFERENCE	LITERAL1
+ADC_TEMPERATURE_CHANNEL_MUX	LITERAL1
+ADC_1_1_VOLT_CHANNEL_MUX	LITERAL1
+ADC_GND_CHANNEL_MUX	LITERAL1
+READING_FOR_AREF	LITERAL1
+MAX_ADC_VALUE	LITERAL1
+
+# From BlinkLed.h
+BLINK_LED_COUNT_FOREVER	LITERAL1
+
+# From HCSR04.h
+DISTANCE_TIMEOUT_RESULT	LITERAL1
+US_DISTANCE_DEFAULT_TIMEOUT_MICROS	LITERAL1
+US_DISTANCE_DEFAULT_TIMEOUT_CENTIMETER	LITERAL1
+US_DISTANCE_TIMEOUT_MICROS_FOR_1_METER	LITERAL1
+US_DISTANCE_TIMEOUT_MICROS_FOR_2_METER	LITERAL1
+US_DISTANCE_TIMEOUT_MICROS_FOR_3_METER	LITERAL1
+HCSR04_DISTANCE_NO_MEASUREMENT	LITERAL1
+HCSR04_MEASUREMENT_AND_DISTANCE_HAS_CHANGED	LITERAL1
+HCSR04_MEASUREMENT_AND_DISTANCE_HAS_NOT_CHANGED	LITERAL1
+HCSR04_MODE_UNINITIALIZED	LITERAL1
+HCSR04_MODE_USE_1_PIN	LITERAL1
+HCSR04_MODE_USE_2_PINS	LITERAL1
+
+# From AVRUtils.h
+PRINT_AVAILABLE_HEAP	LITERAL1

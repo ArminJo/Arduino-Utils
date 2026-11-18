@@ -2,7 +2,6 @@
  * MillisUtils.h
  *
  *  Copyright (C) 2016-2020  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -17,41 +16,42 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
 #ifndef _MILLIS_UTILS_H
 #define _MILLIS_UTILS_H
 
+#include <Arduino.h>
+
 #include <stdint.h>
 #if defined(__AVR__)
-
-//void speedTestWith1kCalls(void (*aFunctionUnderTest)(void));
 
 /*
  * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.
  */
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)  || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-#define timer0_millis millis_timer_millis // The ATTinyCore + Digispark libraries use this variable name in wiring.c
+#if !defined(timer0_millis) && (defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)  || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__))
+#define timer0_millis millis_timer_millis // The ATTinyCore libraries use this variable name in wiring.c
 #endif
 
-#if defined(TIMSK0) && !defined(TIMSK) // some ATtinys and ATmega328
-#define TIMSK TIMSK0
-#endif
+/*
+ * Register and bit of the timer overflow interrupt used for millis().
+ * Own names, to avoid redefining TIMSK / TOIE for all following includes.
+ */
+#define MILLIS_TOIE     TOIE0   // Assume timer 0 for millis()
 
-#if defined(ARDUINO_AVR_DIGISPARK)
-    // Digispark uses timer1 for millis()
-#define TOIE TOIE1
-#else
-#define TOIE TOIE0 // Assume timer 0 for millis()
+#if defined(TIMSK0)
+#define MILLIS_TIMSK    TIMSK0  // e.g. ATmega328, ATtiny167
+#elif defined(TIMSK)
+#define MILLIS_TIMSK    TIMSK   // e.g. ATtiny85, ATmega8
 #endif
 
 extern volatile unsigned long timer0_millis;
 
 void delayAndCallFunctionEveryMillis(unsigned int aDelayMillis, void (*aDelayCallback)(void));
 
-#if (defined(TIMSK) && defined(TOIE)) || (defined(TIMSK0) && defined(TOIE0))
+#if defined(MILLIS_TIMSK)
 void disableMillisInterrupt();
 void enableMillisInterrupt(uint16_t aMillisToAddForCompensation = 0);
 #endif
@@ -60,9 +60,10 @@ void addToMillis(uint16_t aMillisToAdd);
 void speedTestWith1kCalls(Print *aSerial, void (*aFunctionUnderTest)(void));
 #endif //  defined(__AVR__)
 
+#if ! defined(TEENSYDUINO)
 void delayMilliseconds(unsigned int aMillis);
 bool areMillisGone(unsigned int aMillis);
 bool areMillisGone(unsigned int aMillis, unsigned long * aLastMillisPtr);
-
+#endif // ! defined(TEENSYDUINO)
 
 #endif // _MILLIS_UTILS_H

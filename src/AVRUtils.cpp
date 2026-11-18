@@ -4,8 +4,7 @@
  *  Stack, Ram and Heap utilities.
  *  Sleep utilities.
  *
- *  Copyright (C) 2016-2024  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2016-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -20,7 +19,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -32,6 +31,13 @@
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <stdlib.h> // for __malloc_margin
+#include <util/atomic.h> // for ATOMIC_BLOCK
+
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
+    || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
+    || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+#define WDTCSR  WDTCR
+#endif
 
 /*
  * Returns actual start of available / free heap
@@ -39,12 +45,11 @@
  Serial.print(F("AvailableHeapStart=0x"));
  Serial.println((uint16_t) getStartOfAvailableHeap(), HEX);
  */
-
 uint8_t* getStartOfAvailableHeap(void) {
     if (__brkval == 0) {
 // __brkval is 0 if no malloc() has happened before
 //        __brkval = __malloc_heap_start;
-        __brkval = &__heap_start; // = __bss_end, the linker address of heap start
+        return (uint8_t*) &__heap_start; // = __bss_end, the linker address of heap start
     }
     return (uint8_t*) __brkval;
 }
@@ -69,20 +74,20 @@ void initStackFreeMeasurement() {
 /*
  * @param aStackUnusedSizePointer points to variable which is written with amount of stack/heap not used/touched.
  * @return The amount of stack/heap touched since the last call to initStackFreeMeasurement()
- *          -1 if stack was completely used
+ *          -1 if no HEAP_STACK_UNTOUCHED_VALUE value was found,
+ *          i.e. stack above current heap was completely used or overwritten by released heap before.
  * A downward search fails, because it finds an allocated variable / array on stack, which was unused!
  * An upward search may be wrong, and claiming too much stack used, because malloc does not initialize the memory
  * and the search fails with multiple mallocs and partial writing of allocated regions.
  * In this case you should initialize stack free measurement after releasing last heap block.
  */
-//#include <Arduino.h> // for Serial
 int16_t getStackMaxUsedAndUnusedSizes(uint16_t *aStackUnusedSizePointer) {
     /*
      * Search for first touched value from end of current heap.
      */
     uint16_t tStackUnused = 0;
     uint8_t *tHeapPtr = getStartOfAvailableHeap(); // __brkval
-    while (*tHeapPtr == HEAP_STACK_UNTOUCHED_VALUE && tHeapPtr <= (uint8_t*) SP) {
+    while (tHeapPtr <= (uint8_t*) SP && *tHeapPtr == HEAP_STACK_UNTOUCHED_VALUE) {
         tHeapPtr++;
         tStackUnused++;
     }
@@ -113,19 +118,24 @@ void printStackMaxUsedAndUnusedSizes(Print *aSerial) {
 }
 
 /*
- * Search upwards the first two HEAP_STACK_UNTOUCHED_VALUE values after current begin of heap
- * If stack uses total heap, we see the current available stack size here :-(
+ * Starting at current begin of new heap search upwards the first two HEAP_STACK_UNTOUCHED_VALUE values
+ * until found or current SP is reached.
+ * If stack overwrites the HEAP_STACK_UNTOUCHED_VALUE values, we see the current available stack size here :-(
+ * @return -1 If no two HEAP_STACK_UNTOUCHED_VALUE values can be found below current stackpointer.
+ *            i.e. stack or old heap had formerly used/overwritten the region available for current new heap.
+ *  !!! If application stores 2 HEAP_STACK_UNTOUCHED_VALUE values in heap or stack, the return value is wrong!!!
  */
 int16_t getHeapMaxUsedSize() {
     uint8_t *tHeapPtr = getStartOfAvailableHeap();
-    while (*tHeapPtr != HEAP_STACK_UNTOUCHED_VALUE && *(tHeapPtr + 1) != HEAP_STACK_UNTOUCHED_VALUE && tHeapPtr <= (uint8_t*) SP) {
+    while (!(*tHeapPtr == HEAP_STACK_UNTOUCHED_VALUE && *(tHeapPtr + 1) == HEAP_STACK_UNTOUCHED_VALUE) && tHeapPtr < (uint8_t*) SP) {
         tHeapPtr++;
     }
 //    Serial.print(F("tHeapPtr=0x"));
 //    Serial.print((uint16_t)tHeapPtr, HEX);
 //    Serial.print(F(" SP=0x"));
-//    Serial.println((uint16_t)SP, HEX);
-    if ((tHeapPtr-1) == (uint8_t*) SP) {
+//    Serial.print((uint16_t)SP, HEX);
+//    Serial.print(' ');
+    if ((tHeapPtr) == (uint8_t*) SP) {
         return -1;
     }
     // tHeapPtr points now to lowest untouched stack position or to lowest current stack byte
@@ -138,18 +148,13 @@ int16_t getHeapMaxUsedSize() {
  * @return true, if values changed
  */
 bool printStackMaxUsedAndUnusedSizesIfChanged(Print *aSerial) {
-    static int16_t tOldStackUsedBytes = 0;
+    static int16_t sOldStackUsedBytes = 0;
 
     uint16_t tStackUnusedBytes;
     int16_t tStackMaxUsedBytes = getStackMaxUsedAndUnusedSizes(&tStackUnusedBytes);
-    if (tOldStackUsedBytes != tStackMaxUsedBytes) {
-        tOldStackUsedBytes = tStackMaxUsedBytes;
-        aSerial->print(F("Stack used="));
-        aSerial->print(RAMEND - SP);
-        aSerial->print(F(", max used="));
-        aSerial->print(tStackMaxUsedBytes);
-        aSerial->print(F(", unused="));
-        aSerial->println(tStackUnusedBytes);
+    if (sOldStackUsedBytes != tStackMaxUsedBytes) {
+        sOldStackUsedBytes = tStackMaxUsedBytes;
+        printStackMaxUsedAndUnusedSizes(aSerial);
         return true;
     }
     return false;
@@ -177,11 +182,12 @@ void printCurrentAvailableStackSize(Print *aSerial) {
  * FreeRam - __malloc_margin (128 for ATmega328)
  */
 uint16_t getCurrentAvailableHeapSize(void) {
-    if (getCurrentAvailableStackSize() <= __malloc_margin) {
+    uint16_t tStackSize = getCurrentAvailableStackSize();
+    if (tStackSize <= __malloc_margin) {
         return 0;
     }
     // SP - __brkval - __malloc_margin
-    return getCurrentAvailableStackSize() - __malloc_margin; // (128)
+    return tStackSize - __malloc_margin; // (128)
 }
 
 /*
@@ -190,10 +196,8 @@ uint16_t getCurrentAvailableHeapSize(void) {
  * This value is never reached, since it assumes, that malloc() does not use RAMEND, but SP for computing the margin :-(
  */
 uint16_t getTheoreticalMaximumAvailableHeapSize(void) {
-    if (RAMEND <= __malloc_margin) {
-        return 0;
-    }
-    return (RAMEND - RAMSTART) - __malloc_margin; // (128)
+    uint16_t tTotal = (RAMEND + 1) - (uint16_t) &__heap_start;
+    return (tTotal <= __malloc_margin) ? 0 : tTotal - __malloc_margin;
 }
 
 /*
@@ -210,11 +214,8 @@ void printCurrentAvailableHeapSize(Print *aSerial) {
  */
 void printCurrentAvailableHeapSizeSimple(Print *aSerial) {
     aSerial->print(F("available="));
-    aSerial->println(SP - (int16_t) __brkval + 1 - ((int16_t) __malloc_margin));
+    aSerial->println(SP - (uint16_t) __brkval + 1 - ((uint16_t) __malloc_margin));
 }
-
-// This define is in AVRUtils.h
-//#define PRINT_AVAILABLE_HEAP   Serial.print(F("available="));Serial.println(SP - (int16_t) __brkval + 1 - HEURISTIC_ADDITIONAL_MALLOC_MARGIN - ((int16_t) __malloc_margin))
 
 void printBaseRAMData(Print *aSerial) {
     // __malloc_heap_end seems to be 0
@@ -241,14 +242,11 @@ void printBaseRAMData(Print *aSerial) {
     aSerial->print(F("|0x"));
     aSerial->print((uint16_t) SP, HEX);
 
-    /*
-     * The next 2 entries seems to be always 0
-     */
     aSerial->print(F(", __malloc_heap_end="));
     aSerial->print((uint16_t) __malloc_heap_end);
 
     aSerial->print(F(", __flp="));
-    aSerial->print((uint16_t) __flp); // The largest address just not allocated so far / start of available / free heap, initialized at first malloc()
+    aSerial->print((uint16_t) __flp); // Pointer to free list
     aSerial->println();
 }
 
@@ -261,11 +259,12 @@ void printBaseRAMData(Print *aSerial) {
  * The STACK required for this function is 8 bytes, so available numbers are 8 less than for caller.
  *
  * Sample output:
- * Data+BSS=445. Heap: used=770, max used=1096, available=663. Stack: available=791, used=42, max used=319, unused=188 of current total 833
+ * Data+BSS=445. Heap: used=770, max written=1096, max available=663. Stack: available=791, used=42, max used=319, min unused=188 of current total 833
  * Formulas:
  * Stack available + used = current total
- * Heap available + __malloc_margin (128) = Stack available
- * Data+BSS + Heap max used + Stack unused + Stack max used = RAMSIZE
+ * Stack max used + min unused = current total
+ * Heap max available + __malloc_margin (128) = Stack current total
+ * Data+BSS + Heap used + Stack current total = RAMSIZE
  */
 void printRAMAndStackInfo(Print *aSerial) {
 
@@ -281,15 +280,15 @@ void printRAMAndStackInfo(Print *aSerial) {
 
     aSerial->print(F(". Stack: available="));
     aSerial->print((SP + 1) - (int16_t) getStartOfAvailableHeap());
-    aSerial->print(F(", used="));
+    aSerial->print(F(" + used="));
     aSerial->print(RAMEND - SP);
 
     uint16_t tStackUnusedBytes;
     aSerial->print(F(", max used="));
     aSerial->print(getStackMaxUsedAndUnusedSizes(&tStackUnusedBytes));
-    aSerial->print(F(", unused="));
+    aSerial->print(F(" + min unused="));
     aSerial->print(tStackUnusedBytes);
-    aSerial->print(F(" of current total "));
+    aSerial->print(F(" = current total "));
     aSerial->print((RAMEND + 1) - (int16_t) getStartOfAvailableHeap()); // getStartOfAvailableHeap()
 
     aSerial->println();
@@ -361,18 +360,6 @@ void testCallocSizesAndPrint(Print *aSerial) {
  * SLEEP AND WATCHDOG STUFF
  ********************************************/
 
-#ifndef _MILLIS_UTILS_H
-// copied from MillisUtils.h
-/*
- * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.
- */
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)  || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-#define timer0_millis millis_timer_millis // The ATTinyCore libraries use other variable name in wiring.c
-#endif
-
-extern volatile unsigned long timer0_millis;
-#endif // MILLIS_UTILS_H_
-
 /*
  * For sleep modes see sleep.h
  * SLEEP_MODE_IDLE
@@ -395,20 +382,8 @@ void initSleep(uint8_t tSleepMode) {
  * WDTO_1S to WDTO_8S
  */
 void initPeriodicSleepWithWatchdog(uint8_t tSleepMode, uint8_t aWatchdogPrescaler) {
-    sleep_enable()
-    ;
-    set_sleep_mode(tSleepMode);
-    MCUSR = ~_BV(WDRF); // Clear WDRF in MCUSR
-
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
-    || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
-    || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-#define WDTCSR  WDTCR
-#endif
-    // Watchdog interrupt enable + reset interrupt flag -> needs ISR(WDT_vect)
-    uint8_t tWDTCSR = _BV(WDIE) | _BV(WDIF) | (aWatchdogPrescaler & 0x08 ? _WD_PS3_MASK : 0x00) | (aWatchdogPrescaler & 0x07); // handles that the WDP3 bit is in bit 5 of the WDTCSR register,
-    WDTCSR = _BV(WDCE) | _BV(WDE); // clear lock bit for 4 cycles by writing 1 to WDCE AND WDE
-    WDTCSR = tWDTCSR; // set final Value
+    initSleep(tSleepMode);
+    initTimeoutWithWatchdog(aWatchdogPrescaler);
 }
 
 /*
@@ -420,16 +395,13 @@ void initPeriodicSleepWithWatchdog(uint8_t tSleepMode, uint8_t aWatchdogPrescale
  */
 void initTimeoutWithWatchdog(uint8_t aWatchdogPrescaler) {
     MCUSR = ~_BV(WDRF); // Clear WDRF in MCUSR
-
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
-    || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
-    || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-#define WDTCSR  WDTCR
-#endif
     // Watchdog interrupt enable + reset interrupt flag -> needs ISR(WDT_vect)
     uint8_t tWDTCSR = _BV(WDIE) | _BV(WDIF) | (aWatchdogPrescaler & 0x08 ? _WD_PS3_MASK : 0x00) | (aWatchdogPrescaler & 0x07); // handles that the WDP3 bit is in bit 5 of the WDTCSR register,
+    uint8_t tSREG = SREG;
+    cli();
     WDTCSR = _BV(WDCE) | _BV(WDE); // clear lock bit for 4 cycles by writing 1 to WDCE AND WDE
     WDTCSR = tWDTCSR; // set final Value
+    SREG = tSREG;
 }
 
 /*
@@ -437,42 +409,37 @@ void initTimeoutWithWatchdog(uint8_t aWatchdogPrescaler) {
  *                           0 (15 ms) to 3(120 ms), 4 (250 ms) up to 9 (8000 ms)
  */
 uint16_t computeSleepMillis(uint8_t aWatchdogPrescaler) {
-    uint16_t tResultMillis = 8000;
-    for (uint8_t i = 0; i < (9 - aWatchdogPrescaler); ++i) {
-        tResultMillis = tResultMillis / 2;
+    if (aWatchdogPrescaler > 9) {
+        aWatchdogPrescaler = 9; // WDTO_8S is maximum
     }
-    return tResultMillis + DEFAULT_MILLIS_FOR_WAKEUP_AFTER_POWER_DOWN; // + for the (default) startup time. !!! But this depends from Clock Source and sleep mode !!!
+    // 8000 / 2^(9 - aWatchdogPrescaler)
+    return (8000 >> (9 - aWatchdogPrescaler)) + DEFAULT_MILLIS_FOR_WAKEUP_AFTER_POWER_DOWN; // + for the (default) startup time. !!! But this depends from Clock Source and sleep mode !!!
 }
 
 /*
  * @param aWatchdogPrescaler (see wdt.h) can be one of WDTO_15MS, 30, 60, 120, 250, WDTO_500MS, WDTO_1S to WDTO_8S
  *                           0 (15 ms) to 3(120 ms), 4 (250 ms) up to 9 (8000 ms)
- *                           ! I have see + 30 % deviation from nominal WDT clock!
+ *                           ! I have seen + 30 % deviation from nominal WDT clock!
  * @param aAdjustMillis if true, adjust the Arduino internal millis counter the get quite correct millis()
  * results even after sleep, since the periodic 1 ms timer interrupt is disabled while sleeping.
  * Interrupts are enabled before sleep!
  * !!! Do not forget to call e.g. noTone() or  Serial.flush(); to wait for the last character to be sent, and/or disable interrupt sources before !!!
+ * !!! Otherwise this interrupt will wake up the CPU and add aAdjustMillis!!!
  */
 void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis) {
     MCUSR = 0; // Clear MCUSR to enable a correct interpretation of MCUSR after reset
-    ADCSRA &= ~ADEN; // disable ADC just before sleep -> saves 200 uA
+    ADCSRA &= ~_BV(ADEN); // disable ADC just before sleep -> saves 200 uA
 
     // use wdt_enable() since it handles that the WDP3 bit is in bit 5 of the WDTCSR register
     wdt_enable(aWatchdogPrescaler);
 
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-#  if !defined(timer0_millis)
-#define timer0_millis millis_timer_millis // The ATTinyCore + Digispark libraries use millis_timer_millis in wiring.c
-#  endif
-#define WDTCSR  WDTCR
-#endif
     WDTCSR |= _BV(WDIE) | _BV(WDIF); // Watchdog interrupt enable + reset interrupt flag -> requires ISR(WDT_vect)
     sei();         // Enable interrupts, to get the watchdog interrupt, which will wake us up
     sleep_cpu();   // The watchdog interrupt will wake us up from sleep
 
     // We wake up here :-)
     wdt_disable(); // Because next interrupt will otherwise lead to a reset, since wdt_enable() sets WDE / Watchdog System Reset Enable
-    ADCSRA |= ADEN;
+    ADCSRA |= _BV(ADEN);
 
     /*
      * Since timer clock may be disabled adjust millis only if not slept in IDLE mode (SM2...0 bits are 000)
@@ -484,28 +451,12 @@ void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis) {
 #else
     if (aAdjustMillis && (SMCR & ((_BV(SM1) | _BV(SM0)))) != 0) {
 #endif
-        timer0_millis += computeSleepMillis(aWatchdogPrescaler);
+        uint16_t tSleepMillis = computeSleepMillis(aWatchdogPrescaler); // compute outside of the locked section
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+        {
+            timer0_millis += tSleepMillis;
+        }
     }
-}
-
-/*
- * Sample ISR for Watchdog
- * This interrupt prints the timeout message
- */
-//ISR(WDT_vect) {
-//    wdt_reset();
-//    myLCD.setCursor(0, 3);
-//    myLCD.print(F("No voltage detected "));
-//}
-/*
- * 0 -> %1
- * _BV(CLKPS0) -> %2
- * _BV(CLKPS1) -> %4
- * _BV(CLKPS1) | _BV(CLKPS0) -> 8 etc. up to 256
- */
-void setclockDivisionFactor(uint8_t aDivisionBits) {
-    CLKPR = _BV(CLKPCE);
-    CLKPR = aDivisionBits;
 }
 
 #endif // defined(__AVR__)

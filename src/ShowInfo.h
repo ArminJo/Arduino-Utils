@@ -1,8 +1,7 @@
 /*
  * ShowInfo.h
  *
- *  Copyright (C) 2018-2019  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -17,7 +16,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -27,14 +26,6 @@
 #include <Arduino.h>
 
 // Based on https://playground.arduino.cc/Main/ShowInfo
-
-float GetTemp(void);
-
-// Helper function for free ram.
-//   With use of http://playground.arduino.cc/Code/AvailableMemory
-//
-int freeRam(void);
-
 
 // Helper function for sketch size.
 // The sketch size is runtime calculated.
@@ -53,15 +44,16 @@ void Information(void);
 
 void printMCUSR(uint8_t aMCUSRContent);
 
-void printBODLevel(uint8_t aHighFuseBits);
+void printBODLevel(uint8_t aFuseBitsContainingBODLevel);
 void printBODLevel();
 
-#if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
-void printFuses(void);
+
 void printBODSFlagExistence();
-#endif //  defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
 
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
+#  if defined(__AVR_ATtiny85__)
+void printFuses(void);
+#  endif
 /*
  * Short version using printHex and saving Flash
  */
@@ -70,9 +62,7 @@ void Timer0RegisterDump(void);
 void Timer1RegisterDump(void);
 void TimerRegisterDump(void);
 
-#  if ! defined(ARDUINO_AVR_DIGISPARKPRO)
 void ADCChannelDump(void);
-#  endif
 
 #elif !defined(__AVR_ATmega32U4__) // defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny167__) || defined(__AVR_ATtiny87__)
 void Timer0RegisterDump(void);

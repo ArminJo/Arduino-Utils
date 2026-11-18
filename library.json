@@ -1,6 +1,6 @@
 {
   "name": "ArduinoUtils",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Contains utilities for fast and flexible ADC conversions, Voltage and Resitance measurement, RAM, heap and stack info, Hex dumps, EMA filters etc.",
   "keywords": "ADC, EMA, Hex dump, RAM info",
   "homepage": "https://github.com/ArminJo/Arduino-Utils",

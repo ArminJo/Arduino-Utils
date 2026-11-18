@@ -1,12 +1,11 @@
 /*
  * ATtinyUtils.cpp
  *
- *  Copyright (C) 2016-2023  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2016-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
- *  ArduinoUtils is free software: you can redistribute it and/or modify
+ *  Arduino-Utils is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
@@ -17,10 +16,13 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
-#if defined(__AVR__) && defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+
+#include <Arduino.h>
+
+#if defined(__AVR__) && (defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__))
 
 //#define DEBUG
 #if defined(DEBUG)
@@ -35,30 +37,29 @@
 #include <avr/sleep.h> // required for isBODSFlagExistent()
 #include "digitalWriteFast.h"
 
-// since we have not included Arduino.h
-#define INPUT 0x0
-#define OUTPUT 0x1
-#define INPUT_PULLUP 0x2
-
 /*
  * Use port pin number (PB0-PB5) not case or other pin number
  */
-inline void toggleFastPortB(uint8_t aOutputPinNumber) {
+void toggleFastPortB(uint8_t aOutputPinNumber) {
     PINB = (1 << aOutputPinNumber);
 }
 
 // for constant values we can also use: digitalWriteFast()
-inline void digitalWriteFastPortB(uint8_t aOutputPinNumber, bool aValue) {
-    (aValue ? PORTB |= (1 << aOutputPinNumber) : PORTB &= ~(1 << aOutputPinNumber));
+void digitalWriteFastPortB(uint8_t aOutputPinNumber, bool aValue) {
+    if (aValue) {
+        PORTB |= (1 << aOutputPinNumber);
+    } else {
+        PORTB &= ~(1 << aOutputPinNumber);
+    }
 }
 
 // for constant values we can also use: digitalReadFast()
-inline bool digitalReadFastPortB(uint8_t aInputPinNumber) {
+bool digitalReadFastPortB(uint8_t aInputPinNumber) {
     return (PINB & (1 << aInputPinNumber));
 }
 
 // not for INPUT_PULLUP - can be done by setting to input and adding digitalWriteFastPortB(aOutputPinNumber,1);
-inline void pinModeFastPortB(uint8_t aOutputPinNumber, uint8_t aMode) {
+void pinModeFastPortB(uint8_t aOutputPinNumber, uint8_t aMode) {
     (aMode ? DDRB |= (1 << aOutputPinNumber) /* OUTPUT */: DDRB &= ~(1 << aOutputPinNumber));
 }
 
@@ -74,7 +75,7 @@ inline void pinModeFastPortB(uint8_t aOutputPinNumber, uint8_t aMode) {
  */
 void toneWithTimer1PWM(uint16_t aFrequencyHertz, bool aUseOutputB) {
     uint8_t tPrescaler = 0x01;
-    uint16_t tOCR = F_CPU / aFrequencyHertz;
+    uint32_t tOCR = F_CPU / aFrequencyHertz; // uint32_t to avoid overflow at low frequencies
     while (tOCR > 0x100 && tPrescaler < 0x0F) {
         tPrescaler++;
         tOCR >>= 1;
@@ -97,29 +98,30 @@ void toneWithTimer1PWM(uint16_t aFrequencyHertz, bool aUseOutputB) {
     }
 }
 
-
-void noToneWithTimer1PWM(){
+void noToneWithTimer1PWM() {
     TCCR1 = 0; // Disconnect pins and stop timer
 }
-void periodicInterruptWithTimer1(uint16_t aFrequency){
+
+// no check for aFrequency == 0!
+void periodicInterruptWithTimer1(uint16_t aFrequency) {
     uint8_t tPrescaler = 0x01;
-    uint16_t tOCR = F_CPU / aFrequency;
+    uint32_t tOCR = F_CPU / aFrequency; // uint32_t to avoid overflow at low frequencies
     while (tOCR > 0x100 && tPrescaler < 0x0F) {
         tPrescaler++;
         tOCR >>= 1;
     }
-    OCR1C = tOCR - 1; // The frequency of the interrupt will be Timer Clock 1 frequency divided by (OCR1C value + 1).
-
-    TCCR1 |= (1 << CTC1) | tPrescaler;  // clear timer on compare match
-    TIMSK |= (1 << OCIE1A); // enable compare match interrupt
+    OCR1C = tOCR - 1;                     // period
+    OCR1A = tOCR - 1;                     // interrupt point inside the period
+    TCCR1 = (1 << CTC1) | tPrescaler;     // assign, don't OR
+    TIMSK |= (1 << OCIE1A);
 }
 #endif
 
 uint8_t getBODLevelFuses() {
-    return boot_lock_fuse_bits_get(GET_HIGH_FUSE_BITS) & (~FUSE_BODLEVEL2 | ~FUSE_BODLEVEL1 | ~FUSE_BODLEVEL0 );
+    return boot_lock_fuse_bits_get(GET_HIGH_FUSE_BITS) & 0x07; // BODLEVEL2..0 = bit 2..0
 }
 
-bool isBODLevelBelow2_7Volt() {
+bool isBODLevelBelow2_7VoltOrDisabled() {
     return (getBODLevelFuses() >= 6);
 }
 
@@ -132,7 +134,7 @@ bool isBODSFlagExistent() {
     /*
      * Check if flag can be set - this works only for ATtini85 revision C, which is quite unpopular (2019) on Chinese boards.
      */
-    return MCUCR & _BV(BODS);
+    return MCUCR & _BV(BODS); // BODS is cleared by hardware after 3 clock cycles after sleep_bod_disable()
 }
 
 /*
@@ -142,9 +144,9 @@ bool isBODSFlagExistent() {
 void changeDigisparkClock() {
     uint8_t tLowFuse = boot_lock_fuse_bits_get(GET_LOW_FUSE_BITS);
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-    if ((tLowFuse & (~FUSE_CKSEL3 | ~FUSE_CKSEL2 | ~FUSE_CKSEL1 | ~FUSE_CKSEL0 )) == 0x01) { // cannot use ~FUSE_CKSEL0 on right side :-(
+    if ((tLowFuse & 0x0F) == 0x01) { // CKSEL3..0 = 0001 -> PLL clock (16 MHz)
 #elif defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-    if ((tLowFuse & (~FUSE_CKSEL3 | ~FUSE_CKSEL2 | ~FUSE_CKSEL1 )) == 0x0E) { // cannot use ~FUSE_CKSEL1 on right side :-(
+    if ((tLowFuse & 0x0E) == 0x0E) { // // CKSEL3..1 = 111x -> external crystal >= 8 MHz
 #endif
         /*
          * Here we have High Frequency (PLL) Clock ( 16 MHz)
@@ -154,8 +156,7 @@ void changeDigisparkClock() {
         clock_prescale_set(clock_div_16);
 //        CLKPR = (1 << CLKPCE);  // unlock function
 //        CLKPR = (1 << CLKPS2); // 0x04 -> divide by 16
-#endif
-#if (F_CPU == 8000000)
+#elif (F_CPU == 8000000)
         // Divide 16 MHz clock by 2 for Digispark Boards to get the requested 8 MHz
         clock_prescale_set(clock_div_2);
 //        CLKPR = (1 << CLKPCE);  // unlock function
@@ -166,7 +167,9 @@ void changeDigisparkClock() {
     /*
      * Code to reset micronucleus OCCAL tweak
      */
+#if !defined(SIGRD)
 #define  SIGRD  5 // required for boot_signature_byte_get()
+#endif
     uint8_t tStoredOSCCAL = boot_signature_byte_get(1);
     if (OSCCAL != tStoredOSCCAL) {
 #if defined(DEBUG)

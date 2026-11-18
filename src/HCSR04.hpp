@@ -33,8 +33,7 @@
  *  The amplified analog signal is available at pin 5 and the comparator output at pin 6. There you can see other echoes.
  *  3 Pin mode is difficult since it retriggers itself at distances below 7 cm.
  *
- *  Copyright (C) 2018-2020  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -49,7 +48,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -97,12 +96,12 @@ uint8_t sTriggerOutPin; // also used as aTriggerOutEchoInPin for 1 pin mode
 uint8_t sEchoInPin;
 #endif
 
-uint8_t sHCSR04Mode = HCSR04_MODE_UNITITIALIZED;
+uint8_t sHCSR04Mode = HCSR04_MODE_UNINITIALIZED;
 
 unsigned long sLastUSDistanceMeasurementMillis; // Only written by getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged()
 unsigned int sLastUSDistanceCentimeter; // Only written by getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged()
 unsigned int sUSDistanceMicroseconds;
-unsigned int sUSDistanceCentimeter;
+unsigned int sUSDistanceCentimeter; // On timeout it contains DISTANCE_TIMEOUT_RESULT (0)
 uint8_t sUsedMillisForUSDistanceMeasurement;
 
 /*
@@ -118,7 +117,7 @@ void initUSDistancePins(uint8_t aTriggerOutPin, uint8_t aEchoInPin) {
 #if !defined (ECHO_IN_PIN)
         sEchoInPin = aEchoInPin;
 #endif
-        pinModeFast(aTriggerOutPin, OUTPUT);
+        pinModeFast(sTriggerOutPin, OUTPUT);
         pinModeFast(sEchoInPin, INPUT);
         sHCSR04Mode = HCSR04_MODE_USE_2_PINS;
     }
@@ -150,7 +149,7 @@ void initUSDistancePin(uint8_t aTriggerOutEchoInPin) {
  * @return 0 / DISTANCE_TIMEOUT_RESULT if uninitialized or timeout happened
  */
 unsigned int getUSDistance(unsigned int aTimeoutMicros) {
-    if (sHCSR04Mode == HCSR04_MODE_UNITITIALIZED) {
+    if (sHCSR04Mode == HCSR04_MODE_UNINITIALIZED) {
         return DISTANCE_TIMEOUT_RESULT;
     }
 
@@ -205,7 +204,7 @@ unsigned int getUSDistance(unsigned int aTimeoutMicros) {
 }
 
 /*
- * No return of 0 at
+ * No return of DISTANCE_TIMEOUT_RESULT (0) if timeout or pins are not initialized
  */
 unsigned int getCentimeterFromUSMicroSeconds(unsigned int aDistanceMicros) {
     // The reciprocal of formula in getUSDistanceAsCentimeterWithCentimeterTimeout()
@@ -236,14 +235,18 @@ unsigned int getUSDistanceAsCentimeterWithCentimeterTimeout(unsigned int aTimeou
 }
 
 /**
- * @return  HCSR04_DISTANCE_NO_MEASUREMENT, HCSR04_MEASUREMENT_AND_DISTANCE_HAS_CHANGED or HCSR04_MEASUREMENT_AND_DISTANCE_HAS_NOT_CHANGED
+ * Uses sLastUSDistanceMeasurementMillis and sLastUSDistanceCentimeter.
+ * @return  HCSR04_DISTANCE_NO_MEASUREMENT if periodically timeout not reached
+ *          HCSR04_MEASUREMENT_AND_DISTANCE_HAS_CHANGED or HCSR04_MEASUREMENT_AND_DISTANCE_HAS_NOT_CHANGED
+ *          if measurement was taken
+ *          Distance is "returned" in sUSDistanceCentimeter
  */
 uint8_t getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChanged(unsigned int aTimeoutCentimeter,
         unsigned int aMillisBetweenMeasurements, Print *aSerial) {
     if ((millis() - sLastUSDistanceMeasurementMillis) >= aMillisBetweenMeasurements) {
         sLastUSDistanceMeasurementMillis = millis();
 
-        getUSDistanceAsCentimeterWithCentimeterTimeout(aTimeoutCentimeter);
+        getUSDistanceAsCentimeterWithCentimeterTimeout(aTimeoutCentimeter); // sets sUSDistanceCentimeter
         unsigned int tDeltaDistance;
         if (sLastUSDistanceCentimeter > sUSDistanceCentimeter) {
             tDeltaDistance = sLastUSDistanceCentimeter - sUSDistanceCentimeter;
@@ -273,9 +276,10 @@ uint8_t getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChan
 /*
  * Trigger US sensor as fast as sensible if called in a loop to test US devices.
  * trigger pulse is equivalent to 10 cm and then we wait for 20 ms / 3.43 meter
+ * @param aSecondsToTest Must no be greater than 1000
  */
 void testUSSensor(uint16_t aSecondsToTest) {
-    for (long i = 0; i < aSecondsToTest * 50; ++i) {
+    for (uint16_t i = 0; i < (uint16_t) (aSecondsToTest * 50); ++i) {
         digitalWriteFast(sTriggerOutPin, HIGH);
         delayMicroseconds(582); // pulse is as long as echo for 10 cm
         // falling edge starts measurement
@@ -284,7 +288,7 @@ void testUSSensor(uint16_t aSecondsToTest) {
     }
 }
 
-#if (defined(USE_PIN_CHANGE_INTERRUPT_D0_TO_D7) | defined(USE_PIN_CHANGE_INTERRUPT_D8_TO_D13) | defined(USE_PIN_CHANGE_INTERRUPT_A0_TO_A5))
+#if (defined(USE_PIN_CHANGE_INTERRUPT_D0_TO_D7) || defined(USE_PIN_CHANGE_INTERRUPT_D8_TO_D13) || defined(USE_PIN_CHANGE_INTERRUPT_A0_TO_A5))
 
 volatile unsigned long sUSPulseMicros;
 volatile bool sUSValueIsValid = false;
@@ -315,9 +319,9 @@ void handlePCInterrupt(uint8_t aPortState) {
  * pin change interrupt for D0 to D7 here.
  */
 ISR (PCINT2_vect) {
-// read pin
-//    uint8_t tPortState = digitalReadFast(sEchoInPin);//(*portInputRegister(digitalPinToPort(sEchoInPin))) & bit((digitalPinToPCMSKbit(sEchoInPin)));
-    handlePCInterrupt(digitalReadFast(sEchoInPin));
+// check pin
+    uint8_t tPortState = (*portInputRegister(digitalPinToPort(sEchoInPin))) & bit((digitalPinToPCMSKbit(sEchoInPin)));
+    handlePCInterrupt(tPortState);
 }
 #endif
 
@@ -345,19 +349,19 @@ ISR (PCINT1_vect) {
 }
 #endif
 
-#if (defined(USE_PIN_CHANGE_INTERRUPT_D0_TO_D7) | defined(USE_PIN_CHANGE_INTERRUPT_D8_TO_D13) | defined(USE_PIN_CHANGE_INTERRUPT_A0_TO_A5))
+#if (defined(USE_PIN_CHANGE_INTERRUPT_D0_TO_D7) || defined(USE_PIN_CHANGE_INTERRUPT_D8_TO_D13) || defined(USE_PIN_CHANGE_INTERRUPT_A0_TO_A5))
 
 void startUSDistanceAsCentimeterWithCentimeterTimeoutNonBlocking(unsigned int aTimeoutCentimeter) {
 // need minimum 10 usec Trigger Pulse
     digitalWrite(sTriggerOutPin, HIGH);
     sUSValueIsValid = false;
-    sTimeoutMicros = ((aTimeoutCentimeter * 233) + 2) / 4; // = * 58.25 (rounded by using +1)
+    sTimeoutMicros = ((aTimeoutCentimeter * 233L) + 2) / 4; // = * 58.25 (rounded by using +1)
     *digitalPinToPCMSK(sEchoInPin) |= bit(digitalPinToPCMSKbit(sEchoInPin));// enable pin for pin change interrupt
 // the 2 registers exists only once!
-    PCICR |= bit(digitalPinToPCICRbit(sEchoInPin));// enable interrupt for the group
-    PCIFR |= bit(digitalPinToPCICRbit(sEchoInPin));// clear any outstanding interrupt
+    PCICR |= bit(digitalPinToPCICRbit(sEchoInPin)); // enable interrupt for the group
+    PCIFR = bit(digitalPinToPCICRbit(sEchoInPin));  // clear any outstanding interrupt
     sUSPulseMicros = 0;
-    sMicrosAtStartOfPulse = 0;
+    sMicrosAtStartOfPulse = micros(); // safety net for timeout detection
 
 #if defined(DEBUG)
     delay(2); // to see it on scope
@@ -376,16 +380,16 @@ void startUSDistanceAsCentimeterWithCentimeterTimeoutNonBlocking(unsigned int aT
 bool isUSDistanceMeasureFinished() {
     if (sUSValueIsValid) {
         sUSDistanceCentimeter = getCentimeterFromUSMicroSeconds(sUSPulseMicros);
-        return true;
+        *digitalPinToPCMSK(sEchoInPin) &= ~(bit(digitalPinToPCMSKbit(sEchoInPin)));// disable pin for pin change interrupt
+       return true;
     }
 
-    if (sMicrosAtStartOfPulse != 0) {
         if ((micros() - sMicrosAtStartOfPulse) >= sTimeoutMicros) {
             // Timeout happened, value will be 0
             *digitalPinToPCMSK(sEchoInPin) &= ~(bit(digitalPinToPCMSKbit(sEchoInPin)));// disable pin for pin change interrupt
+            sUSDistanceCentimeter = DISTANCE_TIMEOUT_RESULT;
             return true;
         }
-    }
     return false;
 }
 #endif // USE_PIN_CHANGE_INTERRUPT_D0_TO_D7 ...

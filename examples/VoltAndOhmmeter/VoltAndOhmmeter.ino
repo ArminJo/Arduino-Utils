@@ -1,12 +1,11 @@
 /*
- *  VoltAndOhmmeter.cpp
+ *  VoltAndOhmmeter.ino
  *
  *  Realizes an volt and ohmmeter with 6mV and 2 ohm resolution at the lower end.
  *  First voltage is measured.
  *  If voltage is zero, then resistance to ground is measured using 5 volt (VCC) and 10 kOhm or 100 kOhm supply.
  *
- *  Copyright (C) 2021-2025  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2021-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -21,7 +20,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 

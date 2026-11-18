@@ -4,8 +4,7 @@
  *  Assumes, that Wire timeout is enabled e.g. with:
  *  Wire.setWireTimeout(); // Sets default timeout of 25 ms.
  *
- *  Copyright (C) 2023  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2023-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -20,7 +19,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -31,8 +30,8 @@
 #define _WIRE_UTILS_HPP
 
 void printWireError(Print *aSerial, uint8_t aWireReturnCode);
-#define I2C_SCAN_NO_DEVICE          -1
-#define I2C_SCAN_TIMEOUT            -5
+#define I2C_SCAN_NO_DEVICE          (-1)
+#define I2C_SCAN_TIMEOUT            (-5)
 #define I2C_SCAN_FIRST_ERROR_CODE   I2C_SCAN_NO_DEVICE
 int8_t scanForAttachedI2CDevice(Print *aSerial, uint8_t aI2CAddressToStartWith = 0, uint8_t aNumberOfAddresseToScan = 0);
 bool checkForAttachedI2CDevice(Print *aSerial, uint8_t aI2CDeviceAddress);
@@ -48,6 +47,9 @@ uint8_t writeI2CByte(uint8_t aI2CDeviceAddress, uint8_t aByteToWrite) {
     return sGlobalWireReturnCode;
 }
 
+/*
+ * No check if 2 bytes were received actually
+ */
 uint16_t readI2CWordLSBFirst(uint8_t aI2CDeviceAddress) {
     Wire.requestFrom(aI2CDeviceAddress, (uint8_t) 2);
     uint8_t tLSB = Wire.read();
@@ -55,6 +57,9 @@ uint16_t readI2CWordLSBFirst(uint8_t aI2CDeviceAddress) {
     return (uint16_t) tLSB | (((uint16_t) tMSB) << 8);
 }
 
+/*
+ * No check if 2 bytes were received actually
+ */
 uint16_t readI2CWordMSBFirst(uint8_t aI2CDeviceAddress) {
     Wire.requestFrom(aI2CDeviceAddress, (uint8_t) 2);
     uint8_t tMSB = Wire.read();
@@ -69,7 +74,6 @@ uint16_t readI2CWordMSBFirst(uint8_t aI2CDeviceAddress) {
  *          3 .. data send, NACK received
  *          4 .. other twi error (lost bus arbitration, bus error, ..)
  *          5 .. timeout
- * @return true if error happened
  */
 void printWireError(Print *aSerial, uint8_t aWireReturnCode) {
     switch (aWireReturnCode) {
@@ -80,12 +84,13 @@ void printWireError(Print *aSerial, uint8_t aWireReturnCode) {
         aSerial->print(F("Address sent, NACK received. Device not connected?"));
         break;
     case 3: // received NACK on transmit of data
-        aSerial->print(F("Address sent, NACK received."));
+        aSerial->print(F("Data sent, NACK received."));
         break;
+    default:
     case 4: // other error
         aSerial->print(F("Other error"));
         break;
-    case 5: // other error
+    case 5: // timeout
         aSerial->print(F("Timeout while waiting until twi is ready"));
         break;
     }
@@ -96,18 +101,23 @@ void printWireError(Print *aSerial, uint8_t aWireReturnCode) {
  * @return true if attached device found
  */
 bool checkForAttachedI2CDevice(Print *aSerial, uint8_t aI2CDeviceAddress) {
+    uint_fast8_t tTimeoutCounter100Millis = 50; // Wait up to 5 seconds
     do {
         Wire.beginTransmission(aI2CDeviceAddress);
+        sGlobalWireReturnCode = Wire.endTransmission(); // this sets the timeout flag
         if (Wire.getWireTimeoutFlag()) {
+            if (tTimeoutCounter100Millis == 0) {
+                return false;
+            }
             aSerial->println(F("Timeout accessing I2C bus. Wait for bus becoming available"));
             Wire.clearWireTimeoutFlag();
             delay(100);
+            tTimeoutCounter100Millis--;
         } else {
             break;
         }
     } while (true);
 
-    sGlobalWireReturnCode = Wire.endTransmission();
     bool tRetCode;
     if (sGlobalWireReturnCode == 0) {
         aSerial->print(F("Found attached"));
@@ -116,7 +126,7 @@ bool checkForAttachedI2CDevice(Print *aSerial, uint8_t aI2CDeviceAddress) {
         aSerial->print(F("Transmission error code: \""));
         aSerial->print(sGlobalWireReturnCode);
         aSerial->print(F(" | "));
-        printWireError(&Serial, sGlobalWireReturnCode);
+        printWireError(aSerial, sGlobalWireReturnCode);
         aSerial->print(F("\", while checking for"));
         tRetCode = false;
     }
@@ -127,7 +137,9 @@ bool checkForAttachedI2CDevice(Print *aSerial, uint8_t aI2CDeviceAddress) {
 }
 
 /*
- * Scans address 0 to 127
+ * Valid address are 0 to 127 or 0x08 to 0x77 if the reserved are avoided
+ * !!!No check is made if last scan address (aI2CAddressToStartWith + aNumberOfAddresseToScan - 1) is a valid address!!!
+ *
  * @param aNumberOfAddresseToScan - 0 means scan all I2C addresses
  * @return I2C address from 0 to 127, where transmission was successful
  *         -1, I2C_SCAN_NO_DEVICE
@@ -144,8 +156,8 @@ int8_t scanForAttachedI2CDevice(Print *aSerial, uint8_t aI2CAddressToStartWith, 
     if (aNumberOfAddresseToScan == 0) {
         aNumberOfAddresseToScan = 128; // 0 means scan all I2C addresses
     }
-    uint8_t tI2CAddress = aI2CAddressToStartWith;
     // We cannot use uint_fast8_t here, since it is ambiguous parameter for beginTransmission()  on 16/32 bit CPU
+    uint8_t tI2CAddress = aI2CAddressToStartWith;
     for (uint_fast8_t i = 0; i < aNumberOfAddresseToScan; i++) {
         Wire.beginTransmission(tI2CAddress);
         uint8_t tOK = Wire.endTransmission(true);
@@ -159,14 +171,14 @@ int8_t scanForAttachedI2CDevice(Print *aSerial, uint8_t aI2CAddressToStartWith, 
     sScanCount++;
 
     if (millis() - tStartMillis > 2000) {
-        aSerial->print(F("I2C Scan timeout. It seems that at least one of SCA or SCL is connected to ground"));
+        aSerial->println(F("I2C Scan timeout. It seems that at least one of SDA or SCL is connected to ground"));
         return I2C_SCAN_TIMEOUT;
     }
 
     aSerial->print(F("Scan of "));
     aSerial->print(aNumberOfAddresseToScan);
     aSerial->print(F(" addresses starting at 0x"));
-    aSerial->print(aI2CAddressToStartWith);
+    aSerial->print(aI2CAddressToStartWith, HEX);
     aSerial->print(F(" found no attached I2C device. Count="));
     aSerial->println(sScanCount);
     return I2C_SCAN_NO_DEVICE;

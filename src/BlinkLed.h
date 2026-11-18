@@ -1,8 +1,7 @@
 /*
  * BlinkLed.h
  *
- *  Copyright (C) 2018-2019  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -17,7 +16,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -29,32 +28,31 @@
 // The simple blocking variant
 void blinkLEDBlocking(uint8_t aLedPin, uint8_t aBlinkCount, uint16_t aDelayMillis);
 
-#define BLINK_LED_FOREVER -1
+#define BLINK_LED_COUNT_FOREVER (0)
 class BlinkLed {
 public:
     // constructors and initialization
-    BlinkLed();
     BlinkLed(uint8_t aLedPin);
     BlinkLed(uint8_t aLedPin, bool aInitState, unsigned int aOnTimeMillis, unsigned int aOffTime);
     void init(uint8_t aLedPin, bool aInitState);
     void setOnOffTime(unsigned int aOnTimeMillis, unsigned int aOffTime);
 
-    void blink(signed int aBlinkCount, unsigned int aPeriod); // blocking version
+    void blinkBlocking(unsigned int aBlinkCount, unsigned int aPeriodMillis);
 
     void update(); // must be called continuously in loop()
 
     // Blinking ends after aBlinkCount
-    void start(signed int aBlinkCount, unsigned int aOnTimeMillis, unsigned int aOffTime); // start
-    void start(signed int aBlinkCount, unsigned int aPeriod); // start
-    void start(signed int aBlinkCount); // use old values for on and off time
+    void start(unsigned int aBlinkCount, unsigned int aOnTimeMillis, unsigned int aOffTime); // start
+    void start(unsigned int aBlinkCount, unsigned int aPeriodMillis); // start
+    void start(unsigned int aBlinkCount); // use old values for on and off time
     void start();
 
     // Blinking goes forever until off()
-    void startWithOnOffTime(unsigned int aOnTimeMillis, unsigned int aOffTime);
-    void startWithPeriod(unsigned int aPeriod);
-    void startWithOnTime(unsigned int aOnTimeMillis);
-    void startWithOffTime(unsigned int aOffTime);
-    void startWithFrequency(float aFrequency); // set to 50% duty cycle
+    void startForeverWithOnOffTime(unsigned int aOnTimeMillis, unsigned int aOffTime);
+    void startForeverWithPeriod(unsigned int aPeriodMillis);
+    void startForeverWithOnTime(unsigned int aOnTimeMillis);
+    void startForeverWithOffTime(unsigned int aOffTime);
+    void startForeverWithFrequency(float aFrequency); // set to 50% duty cycle
 
     void on(); // force on but do not blink
     void stop();
@@ -65,12 +63,12 @@ public:
 
     uint8_t pin; // Pin number connected to LED anode
     // uint8_t to enable more states like PinStatus of TinyCore
-    volatile uint8_t state; // LED state (volatile so that the compiler doesn't optimize this variable into some constant)
-    signed int numberOfBlinks; // Negative values mean forever
-    unsigned int onDelayMillis; // On time in milliseconds
-    unsigned int offDelayMillis; // Off time in milliseconds
-    unsigned long lastUpdateMillis; // The last time (millis) LED was updated
-    bool enabled = true; // LED enabled/disabled state
+    uint8_t state;
+    unsigned int numberOfBlinks = BLINK_LED_COUNT_FOREVER; // 0 means forever
+    unsigned int onDelayMillis = 1000; // On time in milliseconds
+    unsigned int offDelayMillis = 1000; // Off time in milliseconds
+    unsigned long lastUpdateMillis = 0; // The last time (millis) LED was updated
+    bool enabled = false; // LED enabled/disabled state
 };
 
 #endif // _BLINK_LED_H

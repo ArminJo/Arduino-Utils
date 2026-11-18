@@ -3,9 +3,9 @@
  *
  *  This library let multiple LEDs, connected to any Arduino output, blink non blocking and independently.
  *  Therefore you must call update continuously in loop()
+ *  Parameter blink count: 0 / BLINK_LED_COUNT_FOREVER means forever
  *
- *  Copyright (C) 2018-2019  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -20,17 +20,17 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  */
 #include <Arduino.h>
 
 #include "BlinkLed.h"
 
 /*
- * The simple blocking variant
+ * The simple blocking variant with 50% duty cycle as static function with parameter aLedPin
  */
 void blinkLEDBlocking(uint8_t aLedPin, uint8_t aBlinkCount, uint16_t aDelayMillis) {
-    for (int i = 0; i < aBlinkCount; ++i) {
+    for (uint8_t i = 0; i < aBlinkCount; ++i) {
         digitalWrite(aLedPin, HIGH);
         delay(aDelayMillis);
         digitalWrite(aLedPin, LOW);
@@ -38,6 +38,19 @@ void blinkLEDBlocking(uint8_t aLedPin, uint8_t aBlinkCount, uint16_t aDelayMilli
     }
 }
 
+/*
+ * set to 50% duty cycle
+ */
+void BlinkLed::blinkBlocking(unsigned int aBlinkCount, unsigned int aPeriodMillis) {
+    if (aBlinkCount == 0) {
+        return;
+    }
+    start(aBlinkCount, aPeriodMillis);
+    while (enabled) {
+        delay(1);
+        update();
+    }
+}
 
 BlinkLed::BlinkLed(uint8_t aLedPin) {
     init(aLedPin, false);
@@ -49,16 +62,16 @@ BlinkLed::BlinkLed(uint8_t aLedPin, bool aInitState, unsigned int aOnTimeMillis,
     setOnOffTime(aOnTimeMillis, aOffTimeMillis);
 }
 
+/*
+ * Is called in constructor, but pinMode() etc. works on AVR here :-)
+ */
 void BlinkLed::init(uint8_t aLedPin, bool aInitState) {
     pin = aLedPin;
     pinMode(pin, OUTPUT);
-    digitalWrite(pin, state);
     state = aInitState;
+    digitalWrite(pin, state);
 }
 
-/*
- * No count specified here, so set to BLINK_LED_FOREVER
- */
 void BlinkLed::setOnOffTime(unsigned int aOnTimeMillis, unsigned int aOffTimeMillis) {
     onDelayMillis = aOnTimeMillis;
     offDelayMillis = aOffTimeMillis;
@@ -75,7 +88,7 @@ void BlinkLed::update() {
         // check for on time gone to change state
         if ((millis() - lastUpdateMillis >= onDelayMillis)) {
             toggle();
-            // count blinks
+            // check for forever blinking
             if (numberOfBlinks > 0) {
                 numberOfBlinks--;
                 if (numberOfBlinks == 0) {
@@ -89,24 +102,24 @@ void BlinkLed::update() {
     }
 }
 
-void BlinkLed::start(signed int aBlinkCount, unsigned int aOnTimeMillis, unsigned int aOffTimeMillis) {
+/*
+ * @param aBlinkCount - 0 means forever
+ */
+void BlinkLed::start(unsigned int aBlinkCount, unsigned int aOnTimeMillis, unsigned int aOffTimeMillis) {
     onDelayMillis = aOnTimeMillis;
     offDelayMillis = aOffTimeMillis;
     start(aBlinkCount);
 }
 
 /*
- * set to 50% duty cycle
+ * set to around 50% duty cycle
  */
-void BlinkLed::start(signed int aBlinkCount, unsigned int aPeriod) {
-    onDelayMillis = offDelayMillis = aPeriod / 2;
+void BlinkLed::start(unsigned int aBlinkCount, unsigned int aPeriodMillis) {
+    onDelayMillis = offDelayMillis = aPeriodMillis / 2;
     start(aBlinkCount);
 }
 
-/*
- * set to 50% duty cycle
- */
-void BlinkLed::start(signed int aBlinkCount) {
+void BlinkLed::start(unsigned int aBlinkCount) {
     numberOfBlinks = aBlinkCount;
     start();
 }
@@ -120,46 +133,38 @@ void BlinkLed::start() {
 }
 
 /*
- * set to 50% duty cycle
+ * No count specified here, so set to BLINK_LED_COUNT_FOREVER
  */
-void BlinkLed::blink(signed int aBlinkCount, unsigned int aPeriod) {
-    start(aBlinkCount, aPeriod);
-    while (numberOfBlinks > 0) {
-        delay(1);
-        update();
-    }
-}
-
-/*
- * No count specified here, so set to BLINK_LED_FOREVER
- */
-void BlinkLed::startWithOnOffTime(unsigned int aOnTimeMillis, unsigned int aOffTimeMillis) {
-    start(BLINK_LED_FOREVER, aOnTimeMillis, aOffTimeMillis);
-}
-
-/*
- * set to 50% duty cycle
- */
-void BlinkLed::startWithPeriod(unsigned int aPeriod) {
-    start(BLINK_LED_FOREVER, aPeriod);
-}
-
-/*
- * set to 50% duty cycle
- */
-void BlinkLed::startWithFrequency(float aFrequency) {
-    offDelayMillis = onDelayMillis = 500.0 / aFrequency;
-    start(BLINK_LED_FOREVER);
-}
-
-void BlinkLed::startWithOnTime(unsigned int aOnTimeMillis) {
+void BlinkLed::startForeverWithOnTime(unsigned int aOnTimeMillis) {
     onDelayMillis = aOnTimeMillis;
-    start();
+    start(BLINK_LED_COUNT_FOREVER);
 }
 
-void BlinkLed::startWithOffTime(unsigned int aOffTimeMillis) {
+void BlinkLed::startForeverWithOffTime(unsigned int aOffTimeMillis) {
     offDelayMillis = aOffTimeMillis;
-    start();
+    start(BLINK_LED_COUNT_FOREVER);
+}
+
+void BlinkLed::startForeverWithOnOffTime(unsigned int aOnTimeMillis, unsigned int aOffTimeMillis) {
+    onDelayMillis = aOnTimeMillis;
+    offDelayMillis = aOffTimeMillis;
+    start(BLINK_LED_COUNT_FOREVER);
+}
+
+/*
+ * set to 50% duty cycle
+ */
+void BlinkLed::startForeverWithPeriod(unsigned int aPeriodMillis) {
+    start(BLINK_LED_COUNT_FOREVER, aPeriodMillis);
+}
+
+/*
+ * set to 50% duty cycle
+ * !!!Parameter aFrequency is not checked for 0.0!!!
+ */
+void BlinkLed::startForeverWithFrequency(float aFrequency) {
+    offDelayMillis = onDelayMillis = 500.0 / aFrequency;
+    start(BLINK_LED_COUNT_FOREVER);
 }
 
 // Toggle state and set new timestamp
@@ -185,9 +190,7 @@ void BlinkLed::stop() {
 
 // Force off and disable blink - the same as stop
 void BlinkLed::off() {
-    digitalWrite(pin, LOW);
-    state = false;
-    enabled = false;
+    stop();
 }
 
 /*

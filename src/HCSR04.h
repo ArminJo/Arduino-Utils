@@ -9,8 +9,7 @@
  *  New module with 1 16 pin and 2 8 pin chips: Connect Trigger and Echo by a resistor > 200 ohm and < 22 kOhm.
  *  All modules: Connect Trigger and Echo by a resistor of 4.7 kOhm.
  *
- *  Copyright (C) 2018-2020  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -25,14 +24,14 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
 #ifndef _HCSR04_H
 #define _HCSR04_H
 
-#include <stdint.h>
+#include <Arduino.h>
 
 #if !defined(DISTANCE_TIMEOUT_RESULT)
 #define DISTANCE_TIMEOUT_RESULT                   0
@@ -61,17 +60,16 @@ uint8_t getUSDistanceAsCentimeterWithCentimeterTimeoutPeriodicallyAndPrintIfChan
         unsigned int aMillisBetweenMeasurements, Print *aSerial);
 void testUSSensor(uint16_t aSecondsToTest);
 
-#if (defined(USE_PIN_CHANGE_INTERRUPT_D0_TO_D7) | defined(USE_PIN_CHANGE_INTERRUPT_D8_TO_D13) | defined(USE_PIN_CHANGE_INTERRUPT_A0_TO_A5))
+#if (defined(USE_PIN_CHANGE_INTERRUPT_D0_TO_D7) || defined(USE_PIN_CHANGE_INTERRUPT_D8_TO_D13) || defined(USE_PIN_CHANGE_INTERRUPT_A0_TO_A5))
 /*
  * Non blocking version
  */
 void startUSDistanceAsCentimeterWithCentimeterTimeoutNonBlocking(unsigned int aTimeoutCentimeter);
 bool isUSDistanceMeasureFinished();
-extern unsigned int sUSDistanceCentimeter;
 extern volatile unsigned long sUSPulseMicros;
 #endif
 
-#define HCSR04_MODE_UNITITIALIZED   0
+#define HCSR04_MODE_UNINITIALIZED   0
 #define HCSR04_MODE_USE_1_PIN       1
 #define HCSR04_MODE_USE_2_PINS      2
 extern uint8_t sHCSR04Mode;

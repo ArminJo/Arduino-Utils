@@ -2,7 +2,6 @@
  * SimpleEMAFilters.h
  *
  *  Copyright (C) 2020-2026  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -17,7 +16,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -33,16 +32,16 @@ struct BiquadFilter16Struct {
     int16_t BiQuadLowpass = 0;
     int16_t BiQuadBandpass = 0;
     int16_t BiQuadHighpass;         // Is always computed new from input and old BiQuadLowpass and BiQuadBandpass values
-    int16_t DampingFactor_shift8;   // 256 is DampingCoefficient 1 (damping) , 128 is 1/2, 512 is 2 etc. 0 -> no damping
-    uint8_t Alpha_shift8;           // 256 = 1 or shift 0, 128 = 1/2 >>1, 64 = 1/4, 32 = 1/8, 16 = 1/16, 4 = 1/64 >>6, 1 = >>8
+    int16_t DampingFactor_shift8;   // (unreachable) 256 is DampingCoefficient 1 (damping) , 128 is 1/2, 512 is 2 etc. 0 -> no damping
+    uint8_t Alpha_shift8;           // (unreachable) 256 = 1 or shift 0, 128 = 1/2 >>1, 64 = 1/4, 32 = 1/8, 16 = 1/16, 4 = 1/64 >>6, 1 = >>8
 };
 
 struct BiquadFilter32Struct {
     int32_t BiQuadLowpass_shift8 = 0;
     int32_t BiQuadBandpass_shift8 = 0;
     int32_t BiQuadHighpass_shift8;  // Is always computed new from input and old BiQuadLowpass and BiQuadBandpass values
-    int16_t DampingFactor_shift8;   // 256 is DampingCoefficient 1 (damping) , 128 is 1/2, 512 is 2 etc. 0 -> no damping
-    uint8_t Alpha_shift8;           // 256 = 1 or shift 0, 128 = 1/2 >>1, 64 = 1/4, 32 = 1/8, 16 = 1/16, 4 = 1/64 >>6, 1 = >>8
+    int16_t DampingFactor_shift8;   // (unreachable) 256 is DampingCoefficient 1 (damping) , 128 is 1/2, 512 is 2 etc. 0 -> no damping
+    uint8_t Alpha_shift8;           // (unreachable) 256 = 1 or shift 0, 128 = 1/2 >>1, 64 = 1/4, 32 = 1/8, 16 = 1/16, 4 = 1/64 >>6, 1 = >>8
 };
 
 void doBiquad_int16(struct BiquadFilter16Struct *BiquadFilter16Ptr, int16_t aInputValue);
@@ -56,7 +55,6 @@ void resetBiquad32(struct BiquadFilter32Struct *BiquadFilter32Ptr);
 #define VERSION_SIMPLE_EMA_FILTERS_MAJOR 2
 #define VERSION_SIMPLE_EMA_FILTERS_MINOR 0
 #define VERSION_SIMPLE_EMA_FILTERS_PATCH 0
-// The change log is at the bottom of the file
 
 /*
  * Definitions for demo example
@@ -81,7 +79,7 @@ void resetBiquad32(struct BiquadFilter32Struct *BiquadFilter32Ptr);
 #define PRINT_BAND_STOP_3_4    0x4000
 
 #define PRINT_BAND_PASS_1_3  0x10000
-#define PRINT_BAND_PASS_1_5  0x30000
+#define PRINT_BAND_PASS_1_5  0x20000
 #define PRINT_BAND_PASS_3_4  0x40000
 #define PRINT_BAND_PASS_3_5  0x80000
 
@@ -121,6 +119,7 @@ extern int16_t sLowpass2;
 extern int16_t sLowpass3;
 extern int16_t sLowpass4;
 extern int16_t sLowpass5;
+extern int16_t sLowpass6;
 
 extern int16_t sDoubleLowpass3;
 extern int16_t sDoubleLowpass4;
@@ -128,6 +127,7 @@ extern int16_t sDoubleLowpass5;
 
 extern int16_t sTripleLowpass3;
 
+extern int32_t sLowpass2_int32_shift8;
 extern int32_t sLowpass3_int32_shift8;
 extern int32_t sLowpass5_int32_shift8;
 extern int32_t sLowpass8_int32_shift8;

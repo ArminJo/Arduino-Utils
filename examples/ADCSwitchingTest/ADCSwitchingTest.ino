@@ -1,10 +1,9 @@
 /*
- *  ADCSwitchingTest.cpp
+ *  ADCSwitchingTest.ino
  *
  *  Tests the switching delays between reference and channels.
  *
- *  Copyright (C) 2020-2021  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2020-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -19,7 +18,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -210,11 +209,12 @@ void loop() {
     Serial.println(F("Read 1.1 volt reference after sample capacitor was loaded with GND + ADC disable + 13.5 S&H periods."));
     printADCValueArray(); // raw = 2803
 
+#if defined(ADC_TEMPERATURE_CHANNEL_MUX)
     /*
      * Read internal temperature ->  samples
      */
     doMeasurement(ADC_TEMPERATURE_CHANNEL_MUX, F("internal temperature channel"), PRECHARGE_WITH_GND, 0);
-
+#endif
     /*
      * Test channel switching from VCC to GND
      */
@@ -252,11 +252,12 @@ void loop() {
      */
     doMeasurement(ADC_1_1_VOLT_CHANNEL_MUX, F("1.1 volt reference"), PRECHARGE_WITH_VCC, 0);
 
+#if defined(ADC_TEMPERATURE_CHANNEL_MUX)
     /*
      * Read internal temperature ->  samples
      */
     doMeasurement(ADC_TEMPERATURE_CHANNEL_MUX, F("internal temperature channel"), PRECHARGE_WITH_VCC, 0);
-
+#endif
     /*
      * 1MOhm VCC input -> 2 to 3 samples until value is stable
      */
@@ -320,7 +321,7 @@ void printADCValueArray(uint16_t tAdditionalDelay) {
     Serial.flush();
 }
 
-void printADCVoltageValueArray(uint16_t tAdditionalDelay) {
+void printADCVoltageValueArray(uint16_t aAdditionalDelay) {
     uint8_t i;
     int8_t tIndexOfFirstStable = -1;
     for (i = 0; i < ADC_ARRAY_SIZE; ++i) {
@@ -335,7 +336,7 @@ void printADCVoltageValueArray(uint16_t tAdditionalDelay) {
         Serial.print(F(" Samples="));
         Serial.print(tIndexOfFirstStable);
         Serial.print(F(" Time="));
-        Serial.print((104 + tAdditionalDelay) * tIndexOfFirstStable);
+        Serial.print((104 + aAdditionalDelay) * tIndexOfFirstStable);
         Serial.print(F(" us "));
     }
 

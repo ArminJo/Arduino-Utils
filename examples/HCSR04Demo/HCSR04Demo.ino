@@ -1,5 +1,5 @@
 /*
- *  HCSR04Demo.cpp
+ *  HCSR04Demo.ino
  *
  *  Gets the USDistance and give tone feedback. Test 2 and 1 pin mode of HY-SRF05 and (modified) HC-SR04.
  *
@@ -11,8 +11,7 @@
  *  All modules: Connect Trigger and Echo by a resistor of 4.7 kOhm.
  *  Some old HY-SRF05 modules of mine cannot be converted, since the output signal going low triggers the next measurement.
  *
- *  Copyright (C) 2020-2022  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2020-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -27,7 +26,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 

@@ -2,7 +2,6 @@
  *  PrintUtils.hpp
  *
  *  Copyright (C) 2026  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -17,13 +16,13 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
 #ifndef _PRINT_UTILS_HPP
 #define _PRINT_UTILS_HPP
 
-//#define LOCAL_DEBUG // This enables debug output only for this file - only for development
+#include <Arduino.h>
 
 // Helper macro for getting a macro definition as string
 #if !defined(STR_HELPER) && !defined(STR)
@@ -35,15 +34,15 @@ template <typename TypeToPrint>
 class PrintIfChanged {
 public:
     const char *PGMTextPtr;
-    TypeToPrint LastValuePrinted;
+    TypeToPrint LastValuePrinted = 0;
 
     // Constructor with PGM text as parameter. const __FlashStringHelper* does not work for constructors
-    PrintIfChanged(const char *aPGMText) { // @suppress("Class members should be properly initialized")
+    explicit PrintIfChanged(const char *aPGMText) { // @suppress("Class members should be properly initialized")
         PGMTextPtr = aPGMText;
     }
 
     /*
-     * @return true if value has changed and printing was done
+     * @return true if value has changed and printing was done. May not print first value if it is 0
      */
     bool printWithLeadingText(TypeToPrint aValueToPrint) {
         if (LastValuePrinted != aValueToPrint) {
@@ -69,7 +68,7 @@ public:
 /*
  * Usage
  * const char BrightnessPGM[] PROGMEM = "Brightness=";
- * PrintIfChanged sBrightnessPrint(BrightnessPGM);
+ * PrintIfChanged<uint8_t> sBrightnessPrint(BrightnessPGM);
  */
 
 #if defined(LOCAL_DEBUG)

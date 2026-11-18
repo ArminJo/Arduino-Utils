@@ -1,5 +1,5 @@
 /*
- *  EMAFilterDemo.cpp
+ *  EMAFilterDemo.ino
  *
  *  Generates a square wave with 4 frequencies or noise and prints filtered values
  *  Frequencies are: 42, 21, 10.5, 5.2 Hz at a sample rate of 1 ms (or 84, 42 ... Hz at a sample rate of 0.5 ms and so on)
@@ -26,7 +26,6 @@
  *
  *
  *  Copyright (C) 2020-2026  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -41,7 +40,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -213,6 +212,9 @@ void loop() {
         /*
          * Running filters and changing periods
          */
+        // set Biquad filter coefficients once
+        initBiquad16(&sBiQuad_int16, 256, 32); // damping factor 1 -> damping, 32 ->shift 3 (64 ->shift 2)
+        initBiquad32(&sBiQuad_int32, 64, 32); // damping factor 1/4 -> low damping, 32 ->shift 3
         doFiltersStep(sInput);
         sSampleCount++;
         if (sSampleCount >= sSamplesPerPeriod) {

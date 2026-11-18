@@ -1,9 +1,8 @@
 /*
- *  50Hz.cpp
+ *  50Hz.ino
  *  Example only for ATtinies: Output 50 Hz at Pin 2/3
  *
- *  Copyright (C) 2015  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2015-2026  Armin Joachimsmeyer
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -11,7 +10,7 @@
  *  See the GNU General Public License for more details.
 
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -21,7 +20,7 @@
 #include "ATtinyUtils.h" // for toneWithTimer1PWM()
 #include <avr/sleep.h>
 
-#define VERSION "1.0"
+#define VERSION_EXAMPLE "1.0"
 #define INFO
 
 void setup() {
@@ -29,7 +28,7 @@ void setup() {
     initTXPin();
 
 #  if defined(INFO)
-    writeString(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\n"));
+    writeString(F("START " __FILE__ "\nVersion " VERSION_EXAMPLE " from " __DATE__ "\n"));
 #  endif
 
     toneWithTimer1PWM(50, true);
